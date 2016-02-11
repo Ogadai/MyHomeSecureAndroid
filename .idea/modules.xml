@@ -2,8 +2,8 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/MyHomeSecureAndroid.iml" filepath="$PROJECT_DIR$/MyHomeSecureAndroid.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
-      <module fileurl="file://$PROJECT_DIR$/ogadai_secure.iml" filepath="$PROJECT_DIR$/ogadai_secure.iml" />
     </modules>
   </component>
 </project>

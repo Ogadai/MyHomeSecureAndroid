@@ -1,4 +1,4 @@
-package com.example.ogadai_secure;
+package com.ogadai.ogadai_secure;
 
 /**
  * Represents an item in a ToDo list

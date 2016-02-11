@@ -1,4 +1,4 @@
-package com.example.ogadai_secure;
+package com.ogadai.ogadai_secure;
 
 import android.app.Activity;
 import android.content.Context;

@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="grizzly-http-2.3.22">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.glassfish.grizzly/grizzly-http/2.3.22/1a1ec5d344c958dedbbe18c514c197ba63224dea/grizzly-http-2.3.22.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.glassfish.grizzly/grizzly-http/2.3.22/3e7f5e511813e4250515e3bf8d67e079fa2c5921/grizzly-http-2.3.22-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

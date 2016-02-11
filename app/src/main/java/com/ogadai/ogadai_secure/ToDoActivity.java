@@ -1,17 +1,27 @@
-package com.example.ogadai_secure;
+package com.ogadai.ogadai_secure;
 
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.security.KeyStore;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -23,8 +33,19 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
+//import com.koushikdutta.async.ByteBufferList;
+//import com.koushikdutta.async.DataEmitter;
+//import com.koushikdutta.async.callback.DataCallback;
+//import com.koushikdutta.async.http.WebSocket;
+//import com.koushikdutta.async.http.socketio.Acknowledge;
+//import com.koushikdutta.async.http.socketio.ConnectCallback;
+//import com.koushikdutta.async.http.socketio.EventCallback;
+//import com.koushikdutta.async.http.socketio.JSONCallback;
+//import com.koushikdutta.async.http.socketio.SocketIOClient;
+//import com.koushikdutta.async.http.socketio.StringCallback;
 import com.microsoft.windowsazure.mobileservices.MobileServiceClient;
 import com.microsoft.windowsazure.mobileservices.UserAuthenticationCallback;
+import com.microsoft.windowsazure.mobileservices.authentication.MobileServiceUser;
 import com.microsoft.windowsazure.mobileservices.http.NextServiceFilterCallback;
 import com.microsoft.windowsazure.mobileservices.http.ServiceFilter;
 import com.microsoft.windowsazure.mobileservices.http.ServiceFilterRequest;
@@ -38,29 +59,42 @@ import com.microsoft.windowsazure.mobileservices.table.sync.localstore.ColumnDat
 import com.microsoft.windowsazure.mobileservices.table.sync.localstore.MobileServiceLocalStoreException;
 import com.microsoft.windowsazure.mobileservices.table.sync.localstore.SQLiteLocalStore;
 import com.microsoft.windowsazure.mobileservices.table.sync.synchandler.SimpleSyncHandler;
+//import com.neovisionaries.ws.client.OpeningHandshakeException;
+//import com.neovisionaries.ws.client.WebSocket;
+//import com.neovisionaries.ws.client.WebSocketAdapter;
+//import com.neovisionaries.ws.client.WebSocketException;
+//import com.neovisionaries.ws.client.WebSocketFactory;
+//
+//import de.tavendo.autobahn.WebSocketConnection;
+//import de.tavendo.autobahn.WebSocketException;
+//import de.tavendo.autobahn.WebSocketHandler;
+//import de.tavendo.autobahn.WebSocketOptions;
+//
+//import org.java_websocket.WebSocketImpl;
+//import org.java_websocket.client.WebSocketClient;
+//import org.java_websocket.drafts.Draft_10;
+//import org.java_websocket.drafts.Draft_17;
+//import org.java_websocket.exceptions.InvalidHandshakeException;
+//import org.java_websocket.handshake.ClientHandshake;
+//import org.java_websocket.handshake.ClientHandshakeBuilder;
+//import org.java_websocket.handshake.ServerHandshake;
+
+import org.glassfish.tyrus.client.ClientManager;
+
+import javax.websocket.ClientEndpointConfig;
+import javax.websocket.Endpoint;
+import javax.websocket.EndpointConfig;
+import javax.websocket.MessageHandler;
+import javax.websocket.Session;
+
+//import com.koushikdutta.async.http.AsyncHttpClient;
+//
+//import org.json.JSONArray;
+//import org.json.JSONObject;
 
 import static com.microsoft.windowsazure.mobileservices.table.query.QueryOperations.*;
 
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.atomic.AtomicBoolean;
-
-import android.content.Context;
-import android.content.SharedPreferences;
-import android.content.SharedPreferences.Editor;
-
-import com.microsoft.windowsazure.mobileservices.authentication.MobileServiceAuthenticationProvider;
-import com.microsoft.windowsazure.mobileservices.authentication.MobileServiceUser;
-
-import android.content.Context;
-import android.content.SharedPreferences;
-import android.content.SharedPreferences.Editor;
-
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.ExecutionException;
-
-import com.microsoft.windowsazure.mobileservices.MobileServiceException;
-
-public class ToDoActivity extends Activity {
+public class ToDoActivity extends Activity implements IAuthenticateClient {
 
     /**
      * Mobile Service Client reference
@@ -93,12 +127,7 @@ public class ToDoActivity extends Activity {
      */
     private ProgressBar mProgressBar;
 
-    public boolean bAuthenticating = false;
-    public final Object mAuthenticationLock = new Object();
-
-    public static final String SHAREDPREFFILE = "temp";
-    public static final String USERIDPREF = "uid";
-    public static final String TOKENPREF = "tkn";
+    private IGoogleAuthenticator mAuthenticator;
 
     /**
      * Initializes the activity
@@ -120,15 +149,54 @@ public class ToDoActivity extends Activity {
             mClient = new MobileServiceClient(
                     "https://ogadai-secure.azure-mobile.net/",
                     "RhCLppCOuzkwkzZcDDLGcZQTOTwUBj90",
-                    this).withFilter(new ProgressFilter())
-                        .withFilter(new RefreshTokenCacheFilter());
-
-            authenticate(false);
+                    this).withFilter(new ProgressFilter());
+            mAuthenticator = new GoogleAuthenticator();
+            mClient = mAuthenticator.authenticate(mClient, false, this);
         } catch (MalformedURLException e) {
             createAndShowDialog(new Exception("There was an error creating the Mobile Service. Verify the URL"), "Error");
         } catch (Exception e) {
             createAndShowDialog(e, "Error");
         }
+    }
+
+    private void connectWebSocketFromTask() {
+        AsyncTask<String, Void, String> task = new AsyncTask<String, Void, String>() {
+            protected String doInBackground(String... urls) {
+                connectWebSocket();
+                return null;
+            }
+
+            protected void onPostExecute() {
+
+            }
+        };
+        task.execute("");
+    }
+
+    private void connectWebSocket() {
+        try {
+            MobileServiceUser user = mClient.getCurrentUser();
+
+            String token = "";
+            if (user != null)
+            {
+                token = user.getAuthenticationToken();
+            }
+
+            // open websocket
+            final WebsocketClientEndpoint clientEndPoint = new WebsocketClientEndpoint(
+                    "RhCLppCOuzkwkzZcDDLGcZQTOTwUBj90",
+                    token);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            createAndShowDialogFromTask(e, "Error connectToServer");
+        }
+    }
+
+    public void Authenticated(MobileServiceUser user) {
+//        createTable();
+        connectWebSocketFromTask();
     }
 
     /**
@@ -253,103 +321,6 @@ public class ToDoActivity extends Activity {
         return entity;
     }
 
-    /**
-     * Detects if authentication is in progress and waits for it to complete.
-     * Returns true if authentication was detected as in progress. False otherwise.
-     */
-    public boolean detectAndWaitForAuthentication()
-    {
-        boolean detected = false;
-        synchronized(mAuthenticationLock)
-        {
-            do
-            {
-                if (bAuthenticating == true)
-                    detected = true;
-                try
-                {
-                    mAuthenticationLock.wait(1000);
-                }
-                catch(InterruptedException e)
-                {}
-            }
-            while(bAuthenticating == true);
-        }
-        if (bAuthenticating == true)
-            return true;
-
-        return detected;
-    }
-
-    /**
-     * Waits for authentication to complete then adds or updates the token
-     * in the X-ZUMO-AUTH request header.
-     *
-     * @param request
-     *            The request that receives the updated token.
-     */
-    private void waitAndUpdateRequestToken(ServiceFilterRequest request)
-    {
-        MobileServiceUser user = null;
-        if (detectAndWaitForAuthentication())
-        {
-            user = mClient.getCurrentUser();
-            if (user != null)
-            {
-                request.removeHeader("X-ZUMO-AUTH");
-                request.addHeader("X-ZUMO-AUTH", user.getAuthenticationToken());
-            }
-        }
-    }
-
-    /**
-     * Authenticates with the desired login provider. Also caches the token.
-     *
-     * If a local token cache is detected, the token cache is used instead of an actual
-     * login unless bRefresh is set to true forcing a refresh.
-     *
-     * @param bRefreshCache
-     *            Indicates whether to force a token refresh.
-     */
-    private void authenticate(boolean bRefreshCache) {
-
-        bAuthenticating = true;
-
-        if (bRefreshCache || !loadUserTokenCache(mClient))
-        {
-            // New login using the provider and update the token cache.
-            mClient.login(MobileServiceAuthenticationProvider.MicrosoftAccount,
-                    new UserAuthenticationCallback() {
-                        @Override
-                        public void onCompleted(MobileServiceUser user,
-                                                Exception exception, ServiceFilterResponse response) {
-
-                            synchronized (mAuthenticationLock) {
-                                if (exception == null) {
-                                    cacheUserToken(mClient.getCurrentUser());
-                                    createTable();
-                                } else {
-                                    createAndShowDialog(exception.getMessage(), "Login Error");
-                                }
-                                bAuthenticating = false;
-                                mAuthenticationLock.notifyAll();
-                            }
-                        }
-                    });
-        }
-        else
-        {
-            // Other threads may be blocked waiting to be notified when
-            // authentication is complete.
-            synchronized(mAuthenticationLock)
-            {
-                bAuthenticating = false;
-                mAuthenticationLock.notifyAll();
-            }
-            createTable();
-        }
-    }
-
     private void createTable() {
         // Get the Mobile Service Table instance to use
 
@@ -380,32 +351,6 @@ public class ToDoActivity extends Activity {
         refreshItemsFromTable();
     }
 
-    private void cacheUserToken(MobileServiceUser user)
-    {
-        SharedPreferences prefs = getSharedPreferences(SHAREDPREFFILE, Context.MODE_PRIVATE);
-        Editor editor = prefs.edit();
-        editor.putString(USERIDPREF, user.getUserId());
-        editor.putString(TOKENPREF, user.getAuthenticationToken());
-        editor.commit();
-    }
-
-    private boolean loadUserTokenCache(MobileServiceClient client)
-    {
-        SharedPreferences prefs = getSharedPreferences(SHAREDPREFFILE, Context.MODE_PRIVATE);
-        String userId = prefs.getString(USERIDPREF, "undefined");
-        if (userId == "undefined")
-            return false;
-        String token = prefs.getString(TOKENPREF, "undefined");
-        if (token == "undefined")
-            return false;
-
-        MobileServiceUser user = new MobileServiceUser(userId);
-        user.setAuthenticationToken(token);
-        client.setCurrentUser(user);
-
-        return true;
-    }
-
     /**
      * Refresh the list with the items in the Table
      */
@@ -414,7 +359,7 @@ public class ToDoActivity extends Activity {
         // Get the items that weren't marked as completed and add them in the
         // adapter
 
-        AsyncTask<Void, Void, Void> task = new AsyncTask<Void, Void, Void>(){
+        AsyncTask<Void, Void, Void> task = new AsyncTask<Void, Void, Void>() {
             @Override
             protected Void doInBackground(Void... params) {
 
@@ -434,7 +379,7 @@ public class ToDoActivity extends Activity {
                             }
                         }
                     });
-                } catch (final Exception e){
+                } catch (final Exception e) {
                     createAndShowDialogFromTask(e, "Error");
                 }
 
@@ -468,6 +413,7 @@ public class ToDoActivity extends Activity {
 
     /**
      * Initialize local storage
+     *
      * @return
      * @throws MobileServiceLocalStoreException
      * @throws ExecutionException
@@ -510,8 +456,10 @@ public class ToDoActivity extends Activity {
     }
 
     //Offline Sync
+
     /**
      * Sync the current context and the Mobile Service Sync Table
+     *
      * @return
      */
     /*
@@ -532,36 +480,43 @@ public class ToDoActivity extends Activity {
         return runAsyncTask(task);
     }
     */
+    public void showError(Exception exception, String title) {
+        createAndShowDialog(exception, title);
+    }
 
     /**
      * Creates a dialog and shows it
      *
-     * @param exception
-     *            The exception to show in the dialog
-     * @param title
-     *            The dialog title
+     * @param exception The exception to show in the dialog
+     * @param title     The dialog title
      */
-    private void createAndShowDialogFromTask(final Exception exception, String title) {
+    private void createAndShowDialogFromTask(final Exception exception, final String title) {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                createAndShowDialog(exception, "Error");
+                createAndShowDialog(exception, title);
             }
         });
     }
 
+    private void createAndShowDialogFromTask(final String message, final String title) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                createAndShowDialog(message, title);
+            }
+        });
+    }
 
     /**
      * Creates a dialog and shows it
      *
-     * @param exception
-     *            The exception to show in the dialog
-     * @param title
-     *            The dialog title
+     * @param exception The exception to show in the dialog
+     * @param title     The dialog title
      */
     private void createAndShowDialog(Exception exception, String title) {
         Throwable ex = exception;
-        if(exception.getCause() != null){
+        if (exception.getCause() != null) {
             ex = exception.getCause();
         }
         createAndShowDialog(ex.getMessage(), title);
@@ -570,10 +525,8 @@ public class ToDoActivity extends Activity {
     /**
      * Creates a dialog and shows it
      *
-     * @param message
-     *            The dialog message
-     * @param title
-     *            The dialog title
+     * @param message The dialog message
+     * @param title   The dialog title
      */
     private void createAndShowDialog(final String message, final String title) {
         final AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -585,6 +538,7 @@ public class ToDoActivity extends Activity {
 
     /**
      * Run an ASync task on the corresponding executor
+     *
      * @param task
      * @return
      */
@@ -593,78 +547,6 @@ public class ToDoActivity extends Activity {
             return task.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
         } else {
             return task.execute();
-        }
-    }
-
-    /**
-     * The RefreshTokenCacheFilter class filters responses for HTTP status code 401.
-     * When 401 is encountered, the filter calls the authenticate method on the
-     * UI thread. Out going requests and retries are blocked during authentication.
-     * Once authentication is complete, the token cache is updated and
-     * any blocked request will receive the X-ZUMO-AUTH header added or updated to
-     * that request.
-     */
-    private class RefreshTokenCacheFilter implements ServiceFilter {
-
-        AtomicBoolean mAtomicAuthenticatingFlag = new AtomicBoolean();
-
-        @Override
-        public ListenableFuture<ServiceFilterResponse> handleRequest(
-                final ServiceFilterRequest request,
-                final NextServiceFilterCallback nextServiceFilterCallback
-        )
-        {
-            // In this example, if authentication is already in progress we block the request
-            // until authentication is complete to avoid unnecessary authentications as
-            // a result of HTTP status code 401.
-            // If authentication was detected, add the token to the request.
-            waitAndUpdateRequestToken(request);
-
-            // Send the request down the filter chain
-            // retrying up to 5 times on 401 response codes.
-            ListenableFuture<ServiceFilterResponse> future = null;
-            ServiceFilterResponse response = null;
-            int responseCode = 401;
-            for (int i = 0; (i < 5 ) && (responseCode == 401); i++)
-            {
-                future = nextServiceFilterCallback.onNext(request);
-                try {
-                    response = future.get();
-                    responseCode = response.getStatus().getStatusCode();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                } catch (ExecutionException e) {
-                    if (e.getCause().getClass() == MobileServiceException.class)
-                    {
-                        MobileServiceException mEx = (MobileServiceException) e.getCause();
-                        responseCode = mEx.getResponse().getStatus().getStatusCode();
-                        if (responseCode == 401)
-                        {
-                            // Two simultaneous requests from independent threads could get HTTP status 401.
-                            // Protecting against that right here so multiple authentication requests are
-                            // not setup to run on the UI thread.
-                            // We only want to authenticate once. Requests should just wait and retry
-                            // with the new token.
-                            if (mAtomicAuthenticatingFlag.compareAndSet(false, true))
-                            {
-                                // Authenticate on UI thread
-                                runOnUiThread(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        // Force a token refresh during authentication.
-                                        authenticate(true);
-                                    }
-                                });
-                            }
-
-                            // Wait for authentication to complete then update the token in the request.
-                            waitAndUpdateRequestToken(request);
-                            mAtomicAuthenticatingFlag.set(false);
-                        }
-                    }
-                }
-            }
-            return future;
         }
     }
 
