@@ -96,10 +96,10 @@
     <orderEntry type="library" exported="" name="design-23.1.0" level="project" />
     <orderEntry type="library" exported="" name="tyrus-core-1.12" level="project" />
     <orderEntry type="library" exported="" name="javax.websocket-api-1.1" level="project" />
-    <orderEntry type="library" exported="" name="azure-mobile-services-android-sdk-2.0.3" level="project" />
     <orderEntry type="library" exported="" name="tyrus-container-grizzly-client-1.12" level="project" />
-    <orderEntry type="library" exported="" name="azure-notifications-handler-1.0.1" level="project" />
+    <orderEntry type="library" exported="" name="azure-mobile-services-android-sdk-2.0.3" level="project" />
     <orderEntry type="library" exported="" name="grizzly-http-2.3.22" level="project" />
+    <orderEntry type="library" exported="" name="azure-notifications-handler-1.0.1" level="project" />
     <orderEntry type="library" exported="" name="guava-18.0" level="project" />
     <orderEntry type="library" exported="" name="tyrus-spi-1.12" level="project" />
     <orderEntry type="library" exported="" name="recyclerview-v7-23.1.0" level="project" />

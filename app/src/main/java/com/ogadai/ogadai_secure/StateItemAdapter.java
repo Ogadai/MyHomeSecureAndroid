@@ -7,6 +7,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.CheckBox;
+import android.widget.Switch;
 
 import java.util.List;
 
@@ -46,10 +47,16 @@ public class StateItemAdapter extends ArrayAdapter<StateItem> {
         }
 
         row.setTag(currentItem);
-        final CheckBox checkBox = (CheckBox) row.findViewById(R.id.checkStateActive);
-        checkBox.setText(currentItem.getName());
-        checkBox.setChecked(currentItem.getActive());
-        checkBox.setEnabled(false);
+        final Switch theSwitch = (Switch) row.findViewById(R.id.switchStateActive);
+        theSwitch.setText(currentItem.getName());
+        theSwitch.setChecked(currentItem.getActive());
+
+        theSwitch.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View arg0) {
+                theSwitch.setChecked(currentItem.getActive());
+            }
+        });
 
         return row;
     }
