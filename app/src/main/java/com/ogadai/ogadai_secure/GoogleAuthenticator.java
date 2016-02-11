@@ -36,13 +36,11 @@ public class GoogleAuthenticator implements IGoogleAuthenticator {
     public static final String USERIDPREF = "uid";
     public static final String TOKENPREF = "tkn";
 
-    public MobileServiceClient authenticate(MobileServiceClient client, boolean update, IAuthenticateClient authenticateClient) {
-        mClient = client.withFilter(new RefreshTokenCacheFilter());;
+    public void authenticate(MobileServiceClient client, boolean update, IAuthenticateClient authenticateClient) {
+        mClient = client;
         mAuthenticateClient = authenticateClient;
 
         doAuthenticate(update);
-
-        return mClient;
     }
 
     /**
@@ -172,75 +170,4 @@ public class GoogleAuthenticator implements IGoogleAuthenticator {
         return true;
     }
 
-    /**
-     * The RefreshTokenCacheFilter class filters responses for HTTP status code 401.
-     * When 401 is encountered, the filter calls the authenticate method on the
-     * UI thread. Out going requests and retries are blocked during authentication.
-     * Once authentication is complete, the token cache is updated and
-     * any blocked request will receive the X-ZUMO-AUTH header added or updated to
-     * that request.
-     */
-    private class RefreshTokenCacheFilter implements ServiceFilter {
-
-        AtomicBoolean mAtomicAuthenticatingFlag = new AtomicBoolean();
-
-        @Override
-        public ListenableFuture<ServiceFilterResponse> handleRequest(
-                final ServiceFilterRequest request,
-                final NextServiceFilterCallback nextServiceFilterCallback
-        )
-        {
-            // In this example, if authentication is already in progress we block the request
-            // until authentication is complete to avoid unnecessary authentications as
-            // a result of HTTP status code 401.
-            // If authentication was detected, add the token to the request.
-            waitAndUpdateRequestToken(request);
-
-            // Send the request down the filter chain
-            // retrying up to 5 times on 401 response codes.
-            ListenableFuture<ServiceFilterResponse> future = null;
-            ServiceFilterResponse response = null;
-            int responseCode = 401;
-            for (int i = 0; (i < 5 ) && (responseCode == 401); i++)
-            {
-                future = nextServiceFilterCallback.onNext(request);
-                try {
-                    response = future.get();
-                    responseCode = response.getStatus().getStatusCode();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                } catch (ExecutionException e) {
-                    if (e.getCause().getClass() == MobileServiceException.class)
-                    {
-                        MobileServiceException mEx = (MobileServiceException) e.getCause();
-                        responseCode = mEx.getResponse().getStatus().getStatusCode();
-                        if (responseCode == 401)
-                        {
-                            // Two simultaneous requests from independent threads could get HTTP status 401.
-                            // Protecting against that right here so multiple authentication requests are
-                            // not setup to run on the UI thread.
-                            // We only want to authenticate once. Requests should just wait and retry
-                            // with the new token.
-                            if (mAtomicAuthenticatingFlag.compareAndSet(false, true))
-                            {
-                                // Authenticate on UI thread
-                                mAuthenticateClient.runOnUiThread(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        // Force a token refresh during authentication.
-                                        doAuthenticate(true);
-                                    }
-                                });
-                            }
-
-                            // Wait for authentication to complete then update the token in the request.
-                            waitAndUpdateRequestToken(request);
-                            mAtomicAuthenticatingFlag.set(false);
-                        }
-                    }
-                }
-            }
-            return future;
-        }
-    }
 }

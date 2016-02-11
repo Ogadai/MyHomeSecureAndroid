@@ -24,10 +24,7 @@ public class HomeSecureSocket implements IHomeSecureSocket {
     @Override
     public void Disconnect() {
         System.out.println("disconnect home secure socket");
-        if (mClientEndPoint != null) {
-            mClientEndPoint.Disconnect();
-            mClientEndPoint = null;
-        }
+        disconnectWebSocketFromTask();
     }
 
     private void connectWebSocketFromTask(String token) {
@@ -73,4 +70,25 @@ public class HomeSecureSocket implements IHomeSecureSocket {
         }
     }
 
+    private void disconnectWebSocketFromTask()
+    {
+        AsyncTask<String, Void, String> task = new AsyncTask<String, Void, String>() {
+            protected String doInBackground(String... urls) {
+                disconnectWebSocket();
+                return null;
+            }
+
+            protected void onPostExecute() {
+
+            }
+        };
+        task.execute();
+    }
+    private void disconnectWebSocket()
+    {
+        if (mClientEndPoint != null) {
+            mClientEndPoint.Disconnect();
+            mClientEndPoint = null;
+        }
+    }
 }

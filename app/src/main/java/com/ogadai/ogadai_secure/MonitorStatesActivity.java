@@ -1,7 +1,10 @@
 package com.ogadai.ogadai_secure;
 
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -9,6 +12,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.Menu;
+import android.widget.ListView;
 import android.widget.ProgressBar;
 
 import com.google.common.util.concurrent.FutureCallback;
@@ -36,9 +40,10 @@ public class MonitorStatesActivity extends Activity implements IAuthenticateClie
     //private MobileServiceSyncTable<ToDoItem> mToDoTable;
 
     /**
-     * Adapter to sync the items list with the view
+     * Adapter to sync the state list with the view
      */
-    private ToDoItemAdapter mAdapter;
+    private StateItemAdapter mAdapter;
+    private ArrayList<StateItem> mStates;
 
     /**
      * Progress spinner to use for table operations
@@ -56,6 +61,13 @@ public class MonitorStatesActivity extends Activity implements IAuthenticateClie
         setContentView(R.layout.activity_monitor_states);
 
         mProgressBar = (ProgressBar) findViewById(R.id.loadingProgressBar);
+
+        // Create an adapter to bind the items with the view
+        mStates = new ArrayList<StateItem>();
+        mAdapter = new StateItemAdapter(this, R.layout.row_list_monitor_states, mStates);
+
+        ListView listViewStates = (ListView) findViewById(R.id.listViewMonitorStates);
+        listViewStates.setAdapter(mAdapter);
 
         // Initialize the progress bar
         mProgressBar.setVisibility(ProgressBar.GONE);
@@ -97,7 +109,7 @@ public class MonitorStatesActivity extends Activity implements IAuthenticateClie
                     "RhCLppCOuzkwkzZcDDLGcZQTOTwUBj90",
                     this).withFilter(new ProgressFilter());
             mAuthenticator = new GoogleAuthenticator();
-            mClient = mAuthenticator.authenticate(mClient, update, this);
+            mAuthenticator.authenticate(mClient, update, this);
         } catch (MalformedURLException e) {
             createAndShowDialog(new Exception("There was an error creating the Mobile Service. Verify the URL"), "Error");
         } catch (Exception e) {
@@ -222,7 +234,34 @@ public class MonitorStatesActivity extends Activity implements IAuthenticateClie
     @Override
     public void MessageReceived(String message) {
         System.out.println(message);
-        createAndShowDialogFromTask(message, "Message from Server");
+
+        final UpdateStatesMessage statesMessage;
+        try {
+            statesMessage = UpdateStatesMessage.FromJSON(message);
+
+            runOnUiThread(new Runnable() {
+
+                @Override
+                public void run() {
+                    for (StateItem state : statesMessage.getStates()) {
+
+                        boolean found = false;
+                        for (StateItem existing : mStates) {
+                            if (existing.getName().equals(state.getName())) {
+                                existing.setActive(state.getActive());
+                                found = true;
+                            }
+                        }
+
+                        if (!found) mStates.add(state);
+                    }
+                    mAdapter.notifyDataSetChanged();
+                }
+            });
+        } catch (IOException e) {
+            e.printStackTrace();
+            createAndShowDialogFromTask(e, "Error showing states");
+        }
     }
 
     private class ProgressFilter implements ServiceFilter {

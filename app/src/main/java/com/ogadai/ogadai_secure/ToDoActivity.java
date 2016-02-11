@@ -151,7 +151,7 @@ public class ToDoActivity extends Activity implements IAuthenticateClient {
                     "RhCLppCOuzkwkzZcDDLGcZQTOTwUBj90",
                     this).withFilter(new ProgressFilter());
             mAuthenticator = new GoogleAuthenticator();
-            mClient = mAuthenticator.authenticate(mClient, false, this);
+            mAuthenticator.authenticate(mClient, false, this);
         } catch (MalformedURLException e) {
             createAndShowDialog(new Exception("There was an error creating the Mobile Service. Verify the URL"), "Error");
         } catch (Exception e) {
