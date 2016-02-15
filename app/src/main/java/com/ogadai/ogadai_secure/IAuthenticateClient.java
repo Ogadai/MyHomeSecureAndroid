@@ -8,8 +8,7 @@ import com.microsoft.windowsazure.mobileservices.authentication.MobileServiceUse
  * Created by alee on 04/02/2016.
  */
 public interface IAuthenticateClient {
-    void Authenticated(MobileServiceUser user);
+    void authenticated(MobileServiceUser user);
     void showError(Exception exception, String title);
     SharedPreferences getSharedPreferences(String name, int mode);
-    void runOnUiThread(Runnable runnable);
 }

@@ -2,4 +2,6 @@
     <color name="primary">#ff5722</color>
     <color name="primary_dark">#bf360c</color>
     <color name="accent">#ff8a65</color>
+    <color name="primary_text">#ffffff</color>
+    <color name="secondary_text">#000000</color>
 </resources>

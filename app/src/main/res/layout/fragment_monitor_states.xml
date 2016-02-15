@@ -1,10 +1,8 @@
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/LinearLayout1"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    >
+    tools:context="com.ogadai.ogadai_secure.MonitorStatesFragment">
 
     <ListView
         android:id="@+id/listViewMonitorStates"
@@ -12,12 +10,6 @@
         android:layout_height="wrap_content"
         tools:listitem="@layout/row_list_monitor_states"
         android:padding="6dip" >
-
     </ListView>
 
-    <ProgressBar
-        android:id="@+id/loadingProgressBar"
-        android:layout_width="28dp"
-        android:layout_height="28dp" />
-
-</LinearLayout>
+</FrameLayout>

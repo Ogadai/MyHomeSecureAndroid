@@ -51,22 +51,22 @@ public class HomeSecureSocket implements IHomeSecureSocket {
             // add listener
             mClientEndPoint.addMessageHandler(new WebsocketClientEndpoint.MessageHandler() {
                 public void handleOpen() {
-                    mClient.Connected();
+                    mClient.connected();
                 }
                 public void handleMessage(String message) {
-                    mClient.MessageReceived(message);
+                    mClient.messageReceived(message);
                 }
                 public void handleClose(boolean error) {
                     mClientEndPoint = null;
-                    mClient.Disconnected(error);
+                    mClient.disconnected(error);
                 }
             });
 
             mClientEndPoint.Connect(new URI("wss://ogadai-secure.azure-mobile.net/api/userapp"));
         } catch (Exception e) {
             e.printStackTrace();
-            mClient.ShowError(e, "Error connectToServer");
-            mClient.Disconnected(true);
+            mClient.showError(e, "Error connectToServer");
+            mClient.disconnected(true);
         }
     }
 

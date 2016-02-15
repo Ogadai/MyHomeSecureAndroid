@@ -25,7 +25,11 @@ public class GoogleAuthenticator implements IGoogleAuthenticator {
     /**
      * Mobile Service Client reference
      */
-    private MobileServiceClient mClient;
+    private static MobileServiceClient mClient;
+
+    public static void setClient(MobileServiceClient client) {
+        mClient = client;
+    }
 
     private IAuthenticateClient mAuthenticateClient;
 
@@ -36,8 +40,7 @@ public class GoogleAuthenticator implements IGoogleAuthenticator {
     public static final String USERIDPREF = "uid";
     public static final String TOKENPREF = "tkn";
 
-    public void authenticate(MobileServiceClient client, boolean update, IAuthenticateClient authenticateClient) {
-        mClient = client;
+    public void authenticate(boolean update, IAuthenticateClient authenticateClient) {
         mAuthenticateClient = authenticateClient;
 
         doAuthenticate(update);
@@ -69,7 +72,7 @@ public class GoogleAuthenticator implements IGoogleAuthenticator {
                                 if (exception == null) {
                                     if (user != null) {
                                         cacheUserToken(user);
-                                        mAuthenticateClient.Authenticated(user);
+                                        mAuthenticateClient.authenticated(user);
                                     }
                                 } else {
                                     mAuthenticateClient.showError(exception, "Login Error");
@@ -89,7 +92,7 @@ public class GoogleAuthenticator implements IGoogleAuthenticator {
                 bAuthenticating = false;
                 mAuthenticationLock.notifyAll();
             }
-            mAuthenticateClient.Authenticated(mClient.getCurrentUser());
+            mAuthenticateClient.authenticated(mClient.getCurrentUser());
         }
     }
 
