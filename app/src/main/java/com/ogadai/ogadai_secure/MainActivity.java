@@ -100,6 +100,9 @@ public class MainActivity extends Activity
             case 0:
                 newFragment = new MonitorStatesFragment();
                 break;
+            case 1:
+                newFragment = new HistoryFragment();
+                break;
             default:
                 newFragment = PlaceholderFragment.newInstance(position + 1);
                 break;

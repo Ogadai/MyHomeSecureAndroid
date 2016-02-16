@@ -6,6 +6,9 @@
     <string name="mobile_services">Mobile Services </string>
     <string name="menu_refresh">Refresh</string>
     <string name="checkbox_text">Item Text</string>
+    <string name="message_text">Message</string>
+    <string name="date_text">Yesterday</string>
+    <string name="time_text">8:53pm</string>
 
     <string name="title_activity_main">Home Secure</string>
 
