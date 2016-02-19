@@ -1,21 +1,14 @@
-package com.ogadai.ogadai_secure;
+package com.ogadai.ogadai_secure.auth;
 
 import android.content.Context;
 import android.content.SharedPreferences;
 
-import com.google.common.util.concurrent.ListenableFuture;
 import com.microsoft.windowsazure.mobileservices.MobileServiceClient;
-import com.microsoft.windowsazure.mobileservices.MobileServiceException;
 import com.microsoft.windowsazure.mobileservices.UserAuthenticationCallback;
 import com.microsoft.windowsazure.mobileservices.authentication.MobileServiceAuthenticationProvider;
 import com.microsoft.windowsazure.mobileservices.authentication.MobileServiceUser;
-import com.microsoft.windowsazure.mobileservices.http.NextServiceFilterCallback;
-import com.microsoft.windowsazure.mobileservices.http.ServiceFilter;
 import com.microsoft.windowsazure.mobileservices.http.ServiceFilterRequest;
 import com.microsoft.windowsazure.mobileservices.http.ServiceFilterResponse;
-
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Created by alee on 04/02/2016.
@@ -25,22 +18,20 @@ public class GoogleAuthenticator implements IGoogleAuthenticator {
     /**
      * Mobile Service Client reference
      */
-    private static MobileServiceClient mClient;
-
-    public static void setClient(MobileServiceClient client) {
-        mClient = client;
-    }
+    private MobileServiceClient mClient;
+    private ITokenCache mTokenCache;
 
     private IAuthenticateClient mAuthenticateClient;
 
     public boolean bAuthenticating = false;
     public final Object mAuthenticationLock = new Object();
 
-    public static final String SHAREDPREFFILE = "temp";
-    public static final String USERIDPREF = "uid";
-    public static final String TOKENPREF = "tkn";
+    public GoogleAuthenticator(Context context) {
+        mTokenCache = new TokenCache(context);
+    }
 
-    public void authenticate(boolean update, IAuthenticateClient authenticateClient) {
+    public void authenticate(MobileServiceClient client, boolean update, IAuthenticateClient authenticateClient) {
+        mClient = client;
         mAuthenticateClient = authenticateClient;
 
         doAuthenticate(update);
@@ -96,78 +87,19 @@ public class GoogleAuthenticator implements IGoogleAuthenticator {
         }
     }
 
-
-    /**
-     * Detects if authentication is in progress and waits for it to complete.
-     * Returns true if authentication was detected as in progress. False otherwise.
-     */
-    public boolean detectAndWaitForAuthentication()
-    {
-        boolean detected = false;
-        synchronized(mAuthenticationLock)
-        {
-            do
-            {
-                if (bAuthenticating == true)
-                    detected = true;
-                try
-                {
-                    mAuthenticationLock.wait(1000);
-                }
-                catch(InterruptedException e)
-                {}
-            }
-            while(bAuthenticating == true);
-        }
-        if (bAuthenticating == true)
-            return true;
-
-        return detected;
-    }
-
-    /**
-     * Waits for authentication to complete then adds or updates the token
-     * in the X-ZUMO-AUTH request header.
-     *
-     * @param request
-     *            The request that receives the updated token.
-     */
-    private void waitAndUpdateRequestToken(ServiceFilterRequest request)
-    {
-        MobileServiceUser user = null;
-        if (detectAndWaitForAuthentication())
-        {
-            user = mClient.getCurrentUser();
-            if (user != null)
-            {
-                request.removeHeader("X-ZUMO-AUTH");
-                request.addHeader("X-ZUMO-AUTH", user.getAuthenticationToken());
-            }
-        }
-    }
-
-
     private void cacheUserToken(MobileServiceUser user)
     {
-        SharedPreferences prefs = mAuthenticateClient.getSharedPreferences(SHAREDPREFFILE, Context.MODE_PRIVATE);
-        SharedPreferences.Editor editor = prefs.edit();
-        editor.putString(USERIDPREF, user.getUserId());
-        editor.putString(TOKENPREF, user.getAuthenticationToken());
-        editor.commit();
+        mTokenCache.set(new CachedToken(user.getUserId(), user.getAuthenticationToken()));
     }
 
     private boolean loadUserTokenCache(MobileServiceClient client)
     {
-        SharedPreferences prefs = mAuthenticateClient.getSharedPreferences(SHAREDPREFFILE, Context.MODE_PRIVATE);
-        String userId = prefs.getString(USERIDPREF, "undefined");
-        if (userId == "undefined")
-            return false;
-        String token = prefs.getString(TOKENPREF, "undefined");
-        if (token == "undefined")
+        CachedToken cachedToken= mTokenCache.get();
+        if (cachedToken == null)
             return false;
 
-        MobileServiceUser user = new MobileServiceUser(userId);
-        user.setAuthenticationToken(token);
+        MobileServiceUser user = new MobileServiceUser(cachedToken.getUser());
+        user.setAuthenticationToken(cachedToken.getToken());
         client.setCurrentUser(user);
 
         return true;

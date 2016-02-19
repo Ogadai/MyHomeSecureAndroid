@@ -7,4 +7,5 @@ import java.io.IOException;
  */
 public interface IServerRequest {
     String get(String address) throws IOException;
+    String post(String address, String content) throws IOException;
 }

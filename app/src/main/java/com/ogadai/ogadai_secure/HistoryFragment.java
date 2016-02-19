@@ -1,7 +1,6 @@
 package com.ogadai.ogadai_secure;
 
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.app.Fragment;
@@ -11,18 +10,19 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.microsoft.windowsazure.mobileservices.authentication.MobileServiceUser;
+import com.ogadai.ogadai_secure.auth.CachedToken;
+import com.ogadai.ogadai_secure.auth.ITokenCache;
+import com.ogadai.ogadai_secure.auth.TokenCache;
 
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
-public class HistoryFragment extends Fragment implements IAuthenticateClient {
+public class HistoryFragment extends Fragment {
 
     private HistoryRecyclerViewAdapter mHistoryAdapter;
     private List<HistoryItem> mHistoryList = new ArrayList<HistoryItem>();
 
-    private IGoogleAuthenticator mAuthenticator;
     private IServerRequest mServerRequest;
 
     /**
@@ -58,24 +58,16 @@ public class HistoryFragment extends Fragment implements IAuthenticateClient {
         return view;
     }
 
-
-    private void doAuthenticate(boolean update)
-    {
-        try {
-            getMainActivity().showProgressBar();
-
-            mAuthenticator = new GoogleAuthenticator();
-            mAuthenticator.authenticate(update, this);
-        } catch (Exception e) {
-            System.out.println("Authenticate error - " + e.getMessage());
-            getMainActivity().createAndShowDialog(e, "Error");
+    public void connect(){
+        ITokenCache tokenCache = new TokenCache(getActivity());
+        CachedToken cachedToken = tokenCache.get();
+        if (cachedToken == null) {
+            getMainActivity().doAuthenticate(true);
+            return;
         }
-    }
 
-    public void authenticated(MobileServiceUser user){
-        String token = user.getAuthenticationToken();
-
-        mServerRequest = new ServerRequest("RhCLppCOuzkwkzZcDDLGcZQTOTwUBj90", token);
+        getMainActivity().showProgressBar();
+        mServerRequest = new ServerRequest("RhCLppCOuzkwkzZcDDLGcZQTOTwUBj90", cachedToken.getToken());
 
         AsyncTask<String, Void, String> task = new AsyncTask<String, Void, String>() {
             protected String doInBackground(String... urls) {
@@ -99,6 +91,11 @@ public class HistoryFragment extends Fragment implements IAuthenticateClient {
 
                     return result;
                 }
+                catch(FileNotFoundException fileNotFound) {
+                    System.out.println("error getting history: " + fileNotFound.toString());
+                    getMainActivity().doAuthenticate(true);
+                    return "";
+                }
                 catch(Exception e) {
                     System.out.println("error getting JSON: " + e.toString());
                     getMainActivity().createAndShowDialogFromTask(e, "Error getting log");
@@ -116,28 +113,17 @@ public class HistoryFragment extends Fragment implements IAuthenticateClient {
         task.execute();
     }
 
-    public SharedPreferences getSharedPreferences(String name, int mode) {
-        return super.getActivity().getSharedPreferences(name, mode);
-    }
-
-    @Override
-    public void showError(Exception e, String error)
-    {
-        System.out.println(error + " - " + e.getMessage());
-        getMainActivity().createAndShowDialogFromTask(e, error);
-    }
-
     @Override
     public void onStop() {
         super.onStop();
-        System.out.println("Stopped fragment");
+        System.out.println("Stopped history fragment");
     }
 
     @Override
     public void onStart() {
         super.onStart();
-        doAuthenticate(false);
+        connect();
 
-        System.out.println("Started fragment");
+        System.out.println("Started history fragment");
     }
 }

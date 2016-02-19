@@ -1,4 +1,4 @@
-package com.ogadai.ogadai_secure;
+package com.ogadai.ogadai_secure.auth;
 
 import android.content.SharedPreferences;
 
@@ -10,5 +10,4 @@ import com.microsoft.windowsazure.mobileservices.authentication.MobileServiceUse
 public interface IAuthenticateClient {
     void authenticated(MobileServiceUser user);
     void showError(Exception exception, String title);
-    SharedPreferences getSharedPreferences(String name, int mode);
 }

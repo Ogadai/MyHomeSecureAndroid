@@ -32,6 +32,11 @@ public class StateItemAdapter extends ArrayAdapter<StateItem> {
         mLayoutResourceId = layoutResourceId;
     }
 
+    private OnStateClickListener mStateClickListener;
+    public void setStateClickListener(OnStateClickListener listener) {
+        mStateClickListener = listener;
+    }
+
     /**
      * Returns the view for a specific item on the list
      */
@@ -50,14 +55,30 @@ public class StateItemAdapter extends ArrayAdapter<StateItem> {
         final Switch theSwitch = (Switch) row.findViewById(R.id.switchStateActive);
         theSwitch.setText(currentItem.getName());
         theSwitch.setChecked(currentItem.getActive());
+        theSwitch.setEnabled(isAwayState(currentItem));
 
         theSwitch.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View arg0) {
-                theSwitch.setChecked(currentItem.getActive());
+                if (isAwayState(currentItem)) {
+                    if (mStateClickListener != null) {
+                        currentItem.setActive(theSwitch.isChecked());
+                        mStateClickListener.StateClicked(currentItem);
+                    }
+                } else {
+                    theSwitch.setChecked(currentItem.getActive());
+                }
             }
         });
 
         return row;
+    }
+
+    private boolean isAwayState(StateItem state) {
+        return state.getName().compareTo("Away") == 0;
+    }
+
+    public interface OnStateClickListener {
+        void StateClicked(StateItem item);
     }
 }

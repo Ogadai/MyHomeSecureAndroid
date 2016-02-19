@@ -1,34 +1,33 @@
 package com.ogadai.ogadai_secure;
 
+import android.Manifest;
 import android.app.Activity;
 
 import android.app.ActionBar;
 import android.app.AlertDialog;
 import android.app.Fragment;
 import android.app.FragmentManager;
-import android.content.Context;
-import android.os.Build;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.view.Gravity;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.support.v4.widget.DrawerLayout;
-import android.widget.ArrayAdapter;
 import android.widget.ProgressBar;
-import android.widget.TextView;
 
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import com.microsoft.windowsazure.mobileservices.MobileServiceClient;
+import com.microsoft.windowsazure.mobileservices.authentication.MobileServiceUser;
 import com.microsoft.windowsazure.mobileservices.http.NextServiceFilterCallback;
 import com.microsoft.windowsazure.mobileservices.http.ServiceFilter;
 import com.microsoft.windowsazure.mobileservices.http.ServiceFilterRequest;
 import com.microsoft.windowsazure.mobileservices.http.ServiceFilterResponse;
+import com.ogadai.ogadai_secure.auth.GoogleAuthenticator;
+import com.ogadai.ogadai_secure.auth.IAuthenticateClient;
+import com.ogadai.ogadai_secure.awaystatus.GeofenceSetup;
 
 import java.net.MalformedURLException;
 
@@ -55,6 +54,8 @@ public class MainActivity extends Activity
      */
     private CharSequence mTitle;
 
+    private boolean mDoneGeofence = false;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -62,55 +63,102 @@ public class MainActivity extends Activity
 
         mNavigationDrawerFragment = (NavigationDrawerFragment)
                 getFragmentManager().findFragmentById(R.id.navigation_drawer);
+
         mTitle = getTitle();
+        mProgressBar = (ProgressBar) findViewById(R.id.loadingProgressBar);
+        mProgressBar.setVisibility(ProgressBar.GONE);
 
         // Set up the drawer.
         mNavigationDrawerFragment.setUp(
                 R.id.navigation_drawer,
                 (DrawerLayout) findViewById(R.id.drawer_layout));
 
-        mProgressBar = (ProgressBar) findViewById(R.id.loadingProgressBar);
-        mProgressBar.setVisibility(ProgressBar.GONE);
-
-        doAuthenticate();
+        doAuthenticate(false);
     }
 
-    private void doAuthenticate()
+    private final int FINE_LOCATION_REQUEST = 7784;
+    protected void onStart() {
+        if (!mDoneGeofence) {
+            requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, FINE_LOCATION_REQUEST);
+            mDoneGeofence= true;
+        }
+        super.onStart();
+    }
+    protected void onStop() {
+        super.onStop();
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        switch (requestCode) {
+            case FINE_LOCATION_REQUEST:
+                if (PackageManager.PERMISSION_GRANTED==checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)) {
+                    new GeofenceSetup().setup(this);
+                }
+            break;
+        }
+    }
+
+    public void doAuthenticate(boolean update)
     {
         try {
             // Create the Mobile Service Client instance, using the provided
+            clearFragments();
 
             // Mobile Service URL and key
             mClient = new MobileServiceClient(
                     "https://ogadai-secure.azure-mobile.net/",
                     "RhCLppCOuzkwkzZcDDLGcZQTOTwUBj90",
                     this).withFilter(new ProgressFilter());
-            GoogleAuthenticator.setClient(mClient);
+            new GoogleAuthenticator(this).authenticate(mClient, update, new IAuthenticateClient() {
+                @Override
+                public void authenticated(MobileServiceUser user) {
+                    authenticateSuccessful();
+                }
+
+                @Override
+                public void showError(Exception exception, String title) {
+                    createAndShowDialogFromTask(exception, title);
+                }
+            });
         } catch (MalformedURLException e) {
             System.out.println(e.getMessage());
         }
+    }
+
+    private void authenticateSuccessful() {
+        mNavigationDrawerFragment.activate();
+    }
+
+    private Fragment[] mFragments;
+    private void clearFragments() {
+        mFragments = new Fragment[3];
     }
 
     @Override
     public void onNavigationDrawerItemSelected(int position) {
         // update the main content by replacing fragments
         FragmentManager fragmentManager = getFragmentManager();
-        Fragment newFragment = null;
-        switch(position) {
-            case 0:
-                newFragment = new MonitorStatesFragment();
-                break;
-            case 1:
-                newFragment = new HistoryFragment();
-                break;
-            default:
-                newFragment = PlaceholderFragment.newInstance(position + 1);
-                break;
+        Fragment newFragment = mFragments[position];
+        if (newFragment == null) {
+            switch (position) {
+                case 0:
+                    newFragment = new MonitorStatesFragment();
+                    break;
+                case 1:
+                    newFragment = new HistoryFragment();
+                    break;
+                default:
+                    newFragment = PlaceholderFragment.newInstance(position + 1);
+                    break;
+            }
+            mFragments[position] = newFragment;
         }
 
         fragmentManager.beginTransaction()
                 .replace(R.id.container, newFragment)
                 .commit();
+        onSectionAttached(position);
     }
 
     public void onSectionAttached(int number) {
@@ -125,6 +173,7 @@ public class MainActivity extends Activity
                 mTitle = getString(R.string.title_section3);
                 break;
         }
+        restoreActionBar();
     }
 
     public void restoreActionBar() {

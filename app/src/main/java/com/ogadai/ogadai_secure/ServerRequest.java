@@ -4,11 +4,15 @@ import android.os.AsyncTask;
 import android.util.Log;
 
 import java.io.BufferedReader;
+import java.io.DataOutput;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -26,10 +30,14 @@ public class ServerRequest implements IServerRequest {
     }
 
     public String get(String address) throws IOException {
-        return request(address, "GET");
+        return request(address, "GET", null);
     }
 
-    private String request(String address, String method) throws IOException {
+    public String post(String address, String content) throws IOException {
+        return request(address, "POST", content);
+    }
+
+    private String request(String address, String method, String content) throws IOException {
         URL url = new URL(address);
         HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
         urlConnection.setRequestMethod(method);
@@ -37,6 +45,24 @@ public class ServerRequest implements IServerRequest {
         urlConnection.setRequestProperty("X-ZUMO-AUTH", mAuthenticationToken);
 
         try {
+            if (content != null) {
+                //URLEncoder.encode(content, "UTF-8")
+                byte[] postData = content.getBytes(StandardCharsets.UTF_8);
+
+                urlConnection.setDoOutput(true);
+                urlConnection.setInstanceFollowRedirects(false);
+                urlConnection.setRequestProperty("Content-Type", "application/json"); // x-www-form-urlencoded
+                urlConnection.setRequestProperty("charset", "utf-8");
+                urlConnection.setRequestProperty("Content-Length", Integer.toString(postData.length));
+                urlConnection.setUseCaches(false);
+                //urlConnection.connect();
+
+                DataOutputStream outStream = new DataOutputStream(urlConnection.getOutputStream());
+                outStream.write(postData);
+                outStream.flush();
+                outStream.close();
+            }
+
             BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()));
             StringBuilder stringBuilder = new StringBuilder();
             String line;
