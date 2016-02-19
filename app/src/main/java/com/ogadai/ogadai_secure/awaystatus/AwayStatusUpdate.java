@@ -9,6 +9,7 @@ import com.google.gson.annotations.SerializedName;
 import com.ogadai.ogadai_secure.IAwayStatusUpdate;
 import com.ogadai.ogadai_secure.IServerRequest;
 import com.ogadai.ogadai_secure.ServerRequest;
+import com.ogadai.ogadai_secure.ShowNotification;
 import com.ogadai.ogadai_secure.auth.CachedToken;
 import com.ogadai.ogadai_secure.auth.ITokenCache;
 import com.ogadai.ogadai_secure.auth.TokenCache;
@@ -54,6 +55,9 @@ public class AwayStatusUpdate implements IAwayStatusUpdate {
             serverRequest.post("https://ogadai-secure.azure-mobile.net/api/AwayStatus", message);
         } catch (IOException e) {
             System.out.println("Error posting away status - " + e.toString());
+
+            ShowNotification test = new ShowNotification(mContext);
+            test.show("Error when " + action, e.toString());
         }
     }
 
