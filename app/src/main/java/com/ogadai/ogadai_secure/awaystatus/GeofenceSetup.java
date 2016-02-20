@@ -4,7 +4,6 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-import android.provider.SyncStateContract;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -13,11 +12,6 @@ import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.GeofencingRequest;
 import com.google.android.gms.location.LocationServices;
-import com.ogadai.ogadai_secure.EnterExitIntentService;
-
-/**
- * Created by alee on 16/02/2016.
- */
 public class GeofenceSetup implements
         GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
 
@@ -76,8 +70,7 @@ public class GeofenceSetup implements
         GeofencingRequest.Builder builder = new GeofencingRequest.Builder();
         builder.setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER);
         builder.addGeofence(getGeoFence());
-        GeofencingRequest request = builder.build();
-        return request;
+        return builder.build();
     }
 
 
@@ -86,7 +79,8 @@ public class GeofenceSetup implements
         if (mGeofencePendingIntent != null) {
             return mGeofencePendingIntent;
         }
-        Intent intent = new Intent(mContext, EnterExitIntentService.class);
+        Intent intent = new Intent("com.ogadai.ogadai_secure.ACTION_RECEIVE_GEOFENCE");
+//        Intent intent = new Intent(mContext, EnterExitIntentService.class);
         // We use FLAG_UPDATE_CURRENT so that we get the same pending intent back when
         // calling addGeofences() and removeGeofences().
         mGeofencePendingIntent = PendingIntent.getService(mContext, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
