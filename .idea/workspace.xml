@@ -21,30 +21,13 @@
     <option name="TOOL_WINDOW_CONFIGURED_FILTER" value="Show only selected application" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="e7956d80-f040-4b00-99b6-77fe51aa5027" name="Default" comment="Converted to use BroadcastReceiver for Enter/Exit events">
-      <change type="DELETED" beforePath="C:\Users\andyl\Documents\Code\MyHomeSecure\MyHomeSecureAndroid\app\src\main\java\com\ogadai\ogadai_secure\EnterExitIntentService.java" afterPath="" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/app/src/main/AndroidManifest.xml" afterPath="$PROJECT_DIR$/app/src/main/AndroidManifest.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/app/src/main/java/com/ogadai/ogadai_secure/awaystatus/AwayStatusUpdate.java" afterPath="$PROJECT_DIR$/app/src/main/java/com/ogadai/ogadai_secure/awaystatus/AwayStatusUpdate.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/app/src/main/java/com/ogadai/ogadai_secure/awaystatus/GeofenceReceiver.java" afterPath="$PROJECT_DIR$/app/src/main/java/com/ogadai/ogadai_secure/awaystatus/GeofenceReceiver.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/app/src/main/java/com/ogadai/ogadai_secure/awaystatus/GeofenceSetup.java" afterPath="$PROJECT_DIR$/app/src/main/java/com/ogadai/ogadai_secure/awaystatus/GeofenceSetup.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/app/src/main/java/com/ogadai/ogadai_secure/HistoryFragment.java" afterPath="$PROJECT_DIR$/app/src/main/java/com/ogadai/ogadai_secure/HistoryFragment.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/app/src/main/java/com/ogadai/ogadai_secure/socket/HomeSecureSocket.java" afterPath="$PROJECT_DIR$/app/src/main/java/com/ogadai/ogadai_secure/socket/HomeSecureSocket.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/app/src/main/java/com/ogadai/ogadai_secure/socket/IHomeSecureSocketClient.java" afterPath="$PROJECT_DIR$/app/src/main/java/com/ogadai/ogadai_secure/socket/IHomeSecureSocketClient.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/app/src/main/java/com/ogadai/ogadai_secure/IServerRequest.java" afterPath="$PROJECT_DIR$/app/src/main/java/com/ogadai/ogadai_secure/IServerRequest.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/app/src/main/java/com/ogadai/ogadai_secure/MonitorStatesFragment.java" afterPath="$PROJECT_DIR$/app/src/main/java/com/ogadai/ogadai_secure/MonitorStatesFragment.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/app/src/main/java/com/ogadai/ogadai_secure/ServerRequest.java" afterPath="$PROJECT_DIR$/app/src/main/java/com/ogadai/ogadai_secure/ServerRequest.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/app/src/main/java/com/ogadai/ogadai_secure/socket/WebsocketClientEndpoint.java" afterPath="$PROJECT_DIR$/app/src/main/java/com/ogadai/ogadai_secure/socket/WebsocketClientEndpoint.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/app/app.iml" afterPath="$PROJECT_DIR$/app/app.iml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/libraries/appcompat_v7_23_1_1.xml" afterPath="$PROJECT_DIR$/.idea/libraries/appcompat_v7_23_1_1.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/libraries/design_23_1_1.xml" afterPath="$PROJECT_DIR$/.idea/libraries/design_23_1_1.xml" />
+    <list default="true" id="e7956d80-f040-4b00-99b6-77fe51aa5027" name="Default" comment="">
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/libraries/play_services_appindexing_8_1_0.xml" afterPath="$PROJECT_DIR$/.idea/libraries/play_services_appindexing_8_1_0.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/libraries/play_services_base_8_1_0.xml" afterPath="$PROJECT_DIR$/.idea/libraries/play_services_base_8_1_0.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/libraries/play_services_basement_8_1_0.xml" afterPath="$PROJECT_DIR$/.idea/libraries/play_services_basement_8_1_0.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/libraries/play_services_location_8_1_0.xml" afterPath="$PROJECT_DIR$/.idea/libraries/play_services_location_8_1_0.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/libraries/play_services_maps_8_1_0.xml" afterPath="$PROJECT_DIR$/.idea/libraries/play_services_maps_8_1_0.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/libraries/recyclerview_v7_23_1_1.xml" afterPath="$PROJECT_DIR$/.idea/libraries/recyclerview_v7_23_1_1.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/libraries/support_annotations_23_1_1.xml" afterPath="$PROJECT_DIR$/.idea/libraries/support_annotations_23_1_1.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/libraries/support_v4_23_1_1.xml" afterPath="$PROJECT_DIR$/.idea/libraries/support_v4_23_1_1.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
     </list>
     <ignored path="MyHomeSecureAndroid.iws" />
@@ -97,8 +80,8 @@
       <file leaf-file-name="CachedToken.java" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/app/src/main/java/com/ogadai/ogadai_secure/auth/CachedToken.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.5026087">
-              <caret line="17" column="0" selection-start-line="17" selection-start-column="0" selection-end-line="17" selection-end-column="0" />
+            <state vertical-scroll-proportion="0.59130436">
+              <caret line="20" column="0" selection-start-line="20" selection-start-column="0" selection-end-line="20" selection-end-column="0" />
               <folding />
             </state>
           </provider>
@@ -2259,7 +2242,13 @@
       <option name="project" value="LOCAL" />
       <updated>1456007620286</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="Converted to use BroadcastReceiver for Enter/Exit events">
+      <created>1456087579332</created>
+      <option name="number" value="00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1456087579332</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="TodoView">
@@ -2818,8 +2807,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/app/src/main/java/com/ogadai/ogadai_secure/auth/CachedToken.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.5026087">
-          <caret line="17" column="0" selection-start-line="17" selection-start-column="0" selection-end-line="17" selection-end-column="0" />
+        <state vertical-scroll-proportion="0.59130436">
+          <caret line="20" column="0" selection-start-line="20" selection-start-column="0" selection-end-line="20" selection-end-column="0" />
           <folding />
         </state>
       </provider>
