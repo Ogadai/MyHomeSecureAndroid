@@ -5,6 +5,7 @@ package com.ogadai.ogadai_secure.socket;
  */
 public interface IHomeSecureSocketClient {
     void connected();
+    void connectionError(Exception ex);
     void disconnected(boolean error);
     void showError(Exception e, String error);
 

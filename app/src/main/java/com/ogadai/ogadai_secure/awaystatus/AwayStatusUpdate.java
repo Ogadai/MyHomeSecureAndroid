@@ -38,6 +38,8 @@ public class AwayStatusUpdate implements IAwayStatusUpdate {
     }
 
     private void updateStatusOnThread(String action) {
+        System.out.println("updating status transition - " + action);
+
         ITokenCache tokenCache = new TokenCache(mContext);
         CachedToken cachedToken = tokenCache.get();
         if (cachedToken == null) {
@@ -53,7 +55,7 @@ public class AwayStatusUpdate implements IAwayStatusUpdate {
 
         try {
             serverRequest.post("https://ogadai-secure.azure-mobile.net/api/AwayStatus", message);
-        } catch (IOException e) {
+        } catch (Exception e) {
             System.out.println("Error posting away status - " + e.toString());
 
             ShowNotification test = new ShowNotification(mContext);
@@ -62,12 +64,22 @@ public class AwayStatusUpdate implements IAwayStatusUpdate {
     }
 
     private class AwayStatusMessage {
+        @SerializedName("Token")
+        private String mToken;
+
         @SerializedName("Action")
         private String mAction;
 
         public AwayStatusMessage(String action) {
             setAction(action);
         }
+        public AwayStatusMessage(String token, String action) {
+            setToken(token);
+            setAction(action);
+        }
+
+        public String getToken() { return mToken; }
+        public void setToken(String token) { mToken = token; }
 
         public String getAction() { return mAction; }
         public void setAction(String action) { mAction = action; }

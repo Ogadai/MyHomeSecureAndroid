@@ -1,11 +1,14 @@
 package com.ogadai.ogadai_secure.socket;
 
+import org.glassfish.tyrus.client.auth.AuthenticationException;
+
 import java.io.IOException;
 import java.net.URI;
 
 import javax.websocket.ClientEndpoint;
 import javax.websocket.CloseReason;
 import javax.websocket.ContainerProvider;
+import javax.websocket.DeploymentException;
 import javax.websocket.EndpointConfig;
 import javax.websocket.OnClose;
 import javax.websocket.OnMessage;
@@ -34,19 +37,25 @@ public class WebsocketClientEndpoint {
         }
     }
 
-    public void Connect(URI endpointURI) {
+    public void Connect(URI endpointURI) throws AuthenticationException, IOException, DeploymentException {
         try {
             mContainer.connectToServer(this, endpointURI);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+        } catch(DeploymentException depEx) {
+            Throwable cause = depEx.getCause();
+            if (cause instanceof AuthenticationException) {
+                throw (AuthenticationException)cause;
+            }
+            throw depEx;
         }
     }
 
     public void Disconnect() {
         try {
-            Session session = mUserSession;
-            mUserSession = null;
-            session.close();
+            if (mUserSession != null) {
+                Session session = mUserSession;
+                mUserSession = null;
+                session.close();
+            }
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

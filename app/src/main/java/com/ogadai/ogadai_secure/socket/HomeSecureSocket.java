@@ -2,6 +2,8 @@ package com.ogadai.ogadai_secure.socket;
 
 import android.os.AsyncTask;
 
+import org.glassfish.tyrus.client.auth.AuthenticationException;
+
 import java.net.URI;
 
 /**
@@ -42,8 +44,7 @@ public class HomeSecureSocket implements IHomeSecureSocket {
     }
     private void connectWebSocket(String token)
     {
-        try
-        {
+        try {
             mClientEndPoint = new WebsocketClientEndpoint(
                     "RhCLppCOuzkwkzZcDDLGcZQTOTwUBj90",
                     token);
@@ -53,9 +54,11 @@ public class HomeSecureSocket implements IHomeSecureSocket {
                 public void handleOpen() {
                     mClient.connected();
                 }
+
                 public void handleMessage(String message) {
                     mClient.messageReceived(message);
                 }
+
                 public void handleClose(boolean error) {
                     mClientEndPoint = null;
                     mClient.disconnected(error);
@@ -63,10 +66,11 @@ public class HomeSecureSocket implements IHomeSecureSocket {
             });
 
             mClientEndPoint.Connect(new URI("wss://ogadai-secure.azure-mobile.net/api/userapp"));
+        } catch(AuthenticationException authEx) {
+            mClient.connectionError(authEx);
         } catch (Exception e) {
             e.printStackTrace();
-            mClient.showError(e, "Error connectToServer");
-            mClient.disconnected(true);
+            mClient.connectionError(e);
         }
     }
 

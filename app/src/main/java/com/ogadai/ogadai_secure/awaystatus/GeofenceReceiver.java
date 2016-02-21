@@ -9,6 +9,7 @@ import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.GeofencingEvent;
 import com.google.android.gms.location.LocationServices;
 import com.ogadai.ogadai_secure.IAwayStatusUpdate;
+import com.ogadai.ogadai_secure.awaystatus.AwayStatusUpdate;
 
 public class GeofenceReceiver extends BroadcastReceiver {
     public GeofenceReceiver() {

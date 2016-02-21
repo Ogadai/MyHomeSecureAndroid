@@ -18,6 +18,8 @@ import com.ogadai.ogadai_secure.socket.HomeSecureSocket;
 import com.ogadai.ogadai_secure.socket.IHomeSecureSocket;
 import com.ogadai.ogadai_secure.socket.IHomeSecureSocketClient;
 
+import org.glassfish.tyrus.client.auth.AuthenticationException;
+
 import java.io.IOException;
 import java.util.ArrayList;
 
@@ -116,19 +118,33 @@ public class MonitorStatesFragment extends Fragment implements IHomeSecureSocket
     @Override
     public void connected() {
         System.out.println("Connected to server");
-        getMainActivity().hideProgressBar();
+        IMainActivity activity = getMainActivity();
+        if (activity != null) activity.hideProgressBar();
+    }
+
+    @Override
+    public void connectionError(Exception ex)
+    {
+        System.out.println("Error connecting to server - " + ex.getMessage());
+
+        if (ex instanceof AuthenticationException && ((AuthenticationException) ex).getHttpStatusCode() == 401) {
+            getActivity().runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    getMainActivity().doAuthenticate(true);
+                }
+            });
+        } else {
+            getMainActivity().createAndShowDialogFromTask(ex, "Connection error");
+        }
     }
 
     @Override
     public void disconnected(boolean error) {
         System.out.println("Disconnected from server - " + (error ? "error" : "no error"));
-
-        getActivity().runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                getMainActivity().doAuthenticate(true);
-            }
-        });
+        if (error) {
+            getMainActivity().createAndShowDialogFromTask("Disconnected from server", "Disconnected");
+        }
     }
 
     private void ChangedAwayState(StateItem state) {

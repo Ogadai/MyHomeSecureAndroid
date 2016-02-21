@@ -14,6 +14,8 @@ import com.ogadai.ogadai_secure.auth.CachedToken;
 import com.ogadai.ogadai_secure.auth.ITokenCache;
 import com.ogadai.ogadai_secure.auth.TokenCache;
 
+import org.glassfish.tyrus.client.auth.AuthenticationException;
+
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
@@ -91,8 +93,8 @@ public class HistoryFragment extends Fragment {
 
                     return result;
                 }
-                catch(FileNotFoundException fileNotFound) {
-                    System.out.println("error getting history: " + fileNotFound.toString());
+                catch(AuthenticationException authEx) {
+                    System.out.println("error getting history: " + authEx.toString());
                     getMainActivity().doAuthenticate(true);
                     return "";
                 }

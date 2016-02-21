@@ -1,7 +1,10 @@
 package com.ogadai.ogadai_secure;
 
+import android.accounts.AuthenticatorException;
 import android.os.AsyncTask;
 import android.util.Log;
+
+import org.glassfish.tyrus.client.auth.AuthenticationException;
 
 import java.io.BufferedReader;
 import java.io.DataOutput;
@@ -24,25 +27,32 @@ public class ServerRequest implements IServerRequest {
     private String mAppKey;
     private String mAuthenticationToken;
 
+    public ServerRequest(String appKey) {
+        mAppKey = appKey;
+    }
+
     public ServerRequest(String appKey, String authToken) {
         mAppKey = appKey;
         mAuthenticationToken = authToken;
     }
 
-    public String get(String address) throws IOException {
+    public String get(String address) throws IOException, AuthenticationException {
         return request(address, "GET", null);
     }
 
-    public String post(String address, String content) throws IOException {
+    public String post(String address, String content) throws IOException, AuthenticationException {
         return request(address, "POST", content);
     }
 
-    private String request(String address, String method, String content) throws IOException {
+    private String request(String address, String method, String content) throws IOException, AuthenticationException {
         URL url = new URL(address);
         HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
         urlConnection.setRequestMethod(method);
         urlConnection.setRequestProperty("X-ZUMO-APPLICATION", mAppKey);
-        urlConnection.setRequestProperty("X-ZUMO-AUTH", mAuthenticationToken);
+
+        if (mAuthenticationToken != null) {
+            urlConnection.setRequestProperty("X-ZUMO-AUTH", mAuthenticationToken);
+        }
 
         try {
             if (content != null) {
@@ -55,7 +65,7 @@ public class ServerRequest implements IServerRequest {
                 urlConnection.setRequestProperty("charset", "utf-8");
                 urlConnection.setRequestProperty("Content-Length", Integer.toString(postData.length));
                 urlConnection.setUseCaches(false);
-                //urlConnection.connect();
+                urlConnection.connect();
 
                 DataOutputStream outStream = new DataOutputStream(urlConnection.getOutputStream());
                 outStream.write(postData);
@@ -71,6 +81,13 @@ public class ServerRequest implements IServerRequest {
             }
             bufferedReader.close();
             return stringBuilder.toString();
+        }
+        catch(Exception e) {
+            int responseCode = urlConnection.getResponseCode();
+            if (responseCode == 401) {
+                throw new AuthenticationException(urlConnection.getResponseMessage());
+            }
+            throw e;
         }
         finally{
             urlConnection.disconnect();

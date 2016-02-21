@@ -17,17 +17,12 @@ package="com.ogadai.ogadai_secure" android:versionCode="1" android:versionName="
         </intent-filter>
     </activity>
 
-    <service android:name=".EnterExitIntentService" />
-
     <receiver android:name="com.ogadai.ogadai_secure.BootCompletedReceiver">
         <intent-filter>
             <action android:name="android.intent.action.BOOT_COMPLETED" />
         </intent-filter>
     </receiver>
-    <receiver android:name="com.ogadai.ogadai_secure.awaystatus.GeofenceReceiver" android:exported="false">
-        <intent-filter>
-            <action android:name="com.ogadai.ogadai_secure.ACTION_RECEIVE_GEOFENCE" />
-        </intent-filter>
+    <receiver android:name=".awaystatus.GeofenceReceiver">
     </receiver>
 </application>
 
