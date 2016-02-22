@@ -54,8 +54,6 @@ public class MainActivity extends Activity
      */
     private CharSequence mTitle;
 
-    private boolean mDoneGeofence = false;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -76,27 +74,11 @@ public class MainActivity extends Activity
         doAuthenticate(false);
     }
 
-    private final int FINE_LOCATION_REQUEST = 7784;
     protected void onStart() {
-        if (!mDoneGeofence) {
-            requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, FINE_LOCATION_REQUEST);
-            mDoneGeofence= true;
-        }
         super.onStart();
     }
     protected void onStop() {
         super.onStop();
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
-        switch (requestCode) {
-            case FINE_LOCATION_REQUEST:
-                if (PackageManager.PERMISSION_GRANTED==checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)) {
-                    new GeofenceSetup().setup(this);
-                }
-            break;
-        }
     }
 
     public void doAuthenticate(boolean update)
@@ -148,8 +130,8 @@ public class MainActivity extends Activity
                 case 1:
                     newFragment = new HistoryFragment();
                     break;
-                default:
-                    newFragment = PlaceholderFragment.newInstance(position + 1);
+                case 2:
+                    newFragment = new SettingsFragment();
                     break;
             }
             mFragments[position] = newFragment;
@@ -163,13 +145,13 @@ public class MainActivity extends Activity
 
     public void onSectionAttached(int number) {
         switch (number) {
-            case 1:
+            case 0:
                 mTitle = getString(R.string.title_section1);
                 break;
-            case 2:
+            case 1:
                 mTitle = getString(R.string.title_section2);
                 break;
-            case 3:
+            case 2:
                 mTitle = getString(R.string.title_section3);
                 break;
         }
@@ -181,46 +163,6 @@ public class MainActivity extends Activity
         actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_STANDARD);
         actionBar.setDisplayShowTitleEnabled(true);
         actionBar.setTitle(mTitle);
-    }
-
-    /**
-     * A placeholder fragment containing a simple view.
-     */
-    public static class PlaceholderFragment extends Fragment {
-        /**
-         * The fragment argument representing the section number for this
-         * fragment.
-         */
-        private static final String ARG_SECTION_NUMBER = "section_number";
-
-        public PlaceholderFragment() {
-        }
-
-        /**
-         * Returns a new instance of this fragment for the given section
-         * number.
-         */
-        public static PlaceholderFragment newInstance(int sectionNumber) {
-            PlaceholderFragment fragment = new PlaceholderFragment();
-            Bundle args = new Bundle();
-            args.putInt(ARG_SECTION_NUMBER, sectionNumber);
-            fragment.setArguments(args);
-            return fragment;
-        }
-
-        @Override
-        public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                                 Bundle savedInstanceState) {
-            View rootView = inflater.inflate(R.layout.fragment_main, container, false);
-            return rootView;
-        }
-
-        @Override
-        public void onAttach(Activity activity) {
-            super.onAttach(activity);
-            ((MainActivity) activity).onSectionAttached(
-                    getArguments().getInt(ARG_SECTION_NUMBER));
-        }
     }
 
     public void showProgressBar() {

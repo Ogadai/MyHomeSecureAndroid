@@ -5,14 +5,14 @@ import android.os.AsyncTask;
 import android.util.Log;
 
 import com.google.gson.Gson;
-import com.google.gson.annotations.SerializedName;
-import com.ogadai.ogadai_secure.IAwayStatusUpdate;
 import com.ogadai.ogadai_secure.IServerRequest;
 import com.ogadai.ogadai_secure.ServerRequest;
 import com.ogadai.ogadai_secure.ShowNotification;
 import com.ogadai.ogadai_secure.auth.CachedToken;
 import com.ogadai.ogadai_secure.auth.ITokenCache;
 import com.ogadai.ogadai_secure.auth.TokenCache;
+
+import org.glassfish.tyrus.client.auth.AuthenticationException;
 
 import java.io.IOException;
 
@@ -26,62 +26,22 @@ public class AwayStatusUpdate implements IAwayStatusUpdate {
     }
 
     @Override
-    public void updateStatus(String action) {
-        AsyncTask<String, Void, Void> task = new AsyncTask<String, Void, Void>() {
-            @Override
-            protected Void doInBackground(String... urls) {
-                updateStatusOnThread(urls[0]);
-                return null;
-            }
-        };
-        task.execute(action);
-    }
-
-    private void updateStatusOnThread(String action) {
+    public void updateStatus(String action) throws IOException, AuthenticationException {
         System.out.println("updating status transition - " + action);
 
-        ITokenCache tokenCache = new TokenCache(mContext);
+        ITokenCache tokenCache = new TokenCache(mContext, TokenCache.AWAYSTATUS_PREFFILE);
         CachedToken cachedToken = tokenCache.get();
         if (cachedToken == null) {
-            Log.e("geofence", "No cached token available");
+            Log.e("geofence", "No awaystatus token available");
             return;
         }
 
-        IServerRequest serverRequest = new ServerRequest("RhCLppCOuzkwkzZcDDLGcZQTOTwUBj90", cachedToken.getToken());
+        IServerRequest serverRequest = new ServerRequest("RhCLppCOuzkwkzZcDDLGcZQTOTwUBj90");
 
-        AwayStatusMessage awayStatus = new AwayStatusMessage(action);
+        AwayStatusMessage awayStatus = new AwayStatusMessage(cachedToken.getUser(), cachedToken.getToken(), action);
         Gson gson = new Gson();
         String message = gson.toJson(awayStatus);
 
-        try {
-            serverRequest.post("https://ogadai-secure.azure-mobile.net/api/AwayStatus", message);
-        } catch (Exception e) {
-            System.out.println("Error posting away status - " + e.toString());
-
-            ShowNotification test = new ShowNotification(mContext);
-            test.show("Error when " + action, e.toString());
-        }
-    }
-
-    private class AwayStatusMessage {
-        @SerializedName("Token")
-        private String mToken;
-
-        @SerializedName("Action")
-        private String mAction;
-
-        public AwayStatusMessage(String action) {
-            setAction(action);
-        }
-        public AwayStatusMessage(String token, String action) {
-            setToken(token);
-            setAction(action);
-        }
-
-        public String getToken() { return mToken; }
-        public void setToken(String token) { mToken = token; }
-
-        public String getAction() { return mAction; }
-        public void setAction(String action) { mAction = action; }
+        serverRequest.post("https://ogadai-secure.azure-mobile.net/api/AwayStatus", message);
     }
 }

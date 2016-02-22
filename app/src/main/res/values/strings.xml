@@ -23,6 +23,9 @@
 
     <string name="action_settings">Settings</string>
 
-<!-- TODO: Remove or change this placeholder text -->
+    <string name="pref_enterexit">Track location</string>
+    <string name="pref_enterexit_summ">Automatically update Away when leaving or returning home</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>

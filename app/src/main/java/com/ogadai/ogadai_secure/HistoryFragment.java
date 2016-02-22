@@ -61,7 +61,7 @@ public class HistoryFragment extends Fragment {
     }
 
     public void connect(){
-        ITokenCache tokenCache = new TokenCache(getActivity());
+        ITokenCache tokenCache = new TokenCache(getActivity(), TokenCache.GOOGLE_PREFFILE);
         CachedToken cachedToken = tokenCache.get();
         if (cachedToken == null) {
             getMainActivity().doAuthenticate(true);

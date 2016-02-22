@@ -2,6 +2,7 @@ package com.ogadai.ogadai_secure;
 
 import android.content.Context;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.app.Fragment;
 import android.view.LayoutInflater;
@@ -14,6 +15,7 @@ import com.ogadai.ogadai_secure.auth.CachedToken;
 import com.ogadai.ogadai_secure.auth.ITokenCache;
 import com.ogadai.ogadai_secure.auth.TokenCache;
 import com.ogadai.ogadai_secure.awaystatus.AwayStatusUpdate;
+import com.ogadai.ogadai_secure.awaystatus.IAwayStatusUpdate;
 import com.ogadai.ogadai_secure.socket.HomeSecureSocket;
 import com.ogadai.ogadai_secure.socket.IHomeSecureSocket;
 import com.ogadai.ogadai_secure.socket.IHomeSecureSocketClient;
@@ -73,7 +75,7 @@ public class MonitorStatesFragment extends Fragment implements IHomeSecureSocket
     }
 
     public void connect() {
-        ITokenCache tokenCache = new TokenCache(getActivity());
+        ITokenCache tokenCache = new TokenCache(getActivity(), TokenCache.GOOGLE_PREFFILE);
         CachedToken cachedToken = tokenCache.get();
         if (cachedToken == null) {
             getMainActivity().doAuthenticate(true);
@@ -148,9 +150,21 @@ public class MonitorStatesFragment extends Fragment implements IHomeSecureSocket
     }
 
     private void ChangedAwayState(StateItem state) {
-        String action = state.getActive() ? "exited" : "entered";
-        IAwayStatusUpdate statusUpdate = new AwayStatusUpdate(getActivity());
-        statusUpdate.updateStatus(action);
+        final String action = state.getActive() ? "exited" : "entered";
+
+        AsyncTask<String, Void, Void> task = new AsyncTask<String, Void, Void>() {
+            @Override
+            protected Void doInBackground(String... urls) {
+                try {
+                    IAwayStatusUpdate statusUpdate = new AwayStatusUpdate(getActivity());
+                    statusUpdate.updateStatus(action);
+                } catch(Exception e) {
+                    showError(e, "Setting away status");
+                }
+                return null;
+            }
+        };
+        task.execute(action);
     }
 
     @Override

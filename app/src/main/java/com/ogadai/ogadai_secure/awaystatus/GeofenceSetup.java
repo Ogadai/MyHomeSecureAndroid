@@ -13,35 +13,57 @@ import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.GeofencingRequest;
 import com.google.android.gms.location.LocationServices;
 
-public class GeofenceSetup implements
-        GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
+public class GeofenceSetup implements GoogleApiClient.OnConnectionFailedListener {
 
     private Context mContext;
     private GoogleApiClient mGoogleApiClient;
     private PendingIntent mGeofencePendingIntent;
-    private boolean mAddedGeogence = false;
 
     private final String mKey = "ogadai-secure-home-geofence";
 
     public void setup(Context context) {
         System.out.println("Setting up geofence");
-        if (mGoogleApiClient == null) {
-            mGoogleApiClient = new GoogleApiClient.Builder(context)
-                    .addConnectionCallbacks(this)
-                    .addOnConnectionFailedListener(this)
-                    .addApi(LocationServices.API)
-                    .build();
-        }
-
         mContext = context;
+        doGoogleApiClientSetup(true);
+    }
+
+    public void remove(Context context) {
+        System.out.println("Uninstalling geofence");
+        mContext = context;
+        doGoogleApiClientSetup(false);
+    }
+
+    public void doGoogleApiClientSetup(final boolean settingUp) {
+        mGoogleApiClient = new GoogleApiClient.Builder(mContext)
+                .addConnectionCallbacks(new GoogleApiClient.ConnectionCallbacks() {
+                    @Override
+                    public void onConnected(Bundle bundle) {
+                        System.out.println("GoogleApiClient connected");
+
+                        if (settingUp) {
+                            addGeofence();
+                        } else {
+                            removeGeofence();
+                        }
+                    }
+
+                    @Override
+                    public void onConnectionSuspended(int i) {
+
+                    }
+                })
+                .addOnConnectionFailedListener(this)
+                .addApi(LocationServices.API)
+                .build();
+
         mGoogleApiClient.connect();
+
     }
 
     private void addGeofence() {
         System.out.println("Adding geofence");
 
         try {
-//            LocationServices.GeofencingApi.removeGeofences(mGoogleApiClient, getGeofencePendingIntent());
             LocationServices.GeofencingApi.addGeofences(
                     mGoogleApiClient,
                     getGeofencingRequest(),
@@ -57,6 +79,27 @@ public class GeofenceSetup implements
             System.out.println("Error setting up geofence - " + e.toString());
             mGoogleApiClient.disconnect();
         }
+    }
+
+    private void removeGeofence() {
+        System.out.println("Removing geofence");
+
+        try {
+            LocationServices.GeofencingApi.removeGeofences(
+                    mGoogleApiClient,
+                    getGeofencePendingIntent()
+            ).setResultCallback(new ResultCallback<Status>() {
+                @Override
+                public void onResult(Status status) {
+                    System.out.println("Remove geofence result - " + (status.isSuccess() ? "successful" : status.getStatusMessage()));
+                    mGoogleApiClient.disconnect();
+                }
+            });
+        } catch(Exception e) {
+            System.out.println("Error removing geofence - " + e.toString());
+            mGoogleApiClient.disconnect();
+        }
+
     }
 
     private Geofence getGeoFence() {
@@ -90,21 +133,7 @@ public class GeofenceSetup implements
     }
 
     @Override
-    public void onConnected(Bundle bundle) {
-        System.out.println("GoogleApiClient connected");
-        if (!mAddedGeogence) {
-            mAddedGeogence = true;
-            addGeofence();
-        }
-    }
-
-    @Override
-    public void onConnectionSuspended(int i) {
-
-    }
-
-    @Override
     public void onConnectionFailed(ConnectionResult connectionResult) {
-
+        System.out.println("GoogleApiClient connection failed - " + connectionResult.getErrorMessage());
     }
 }

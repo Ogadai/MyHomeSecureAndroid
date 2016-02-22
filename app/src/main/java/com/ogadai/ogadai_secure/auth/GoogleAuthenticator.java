@@ -27,7 +27,7 @@ public class GoogleAuthenticator implements IGoogleAuthenticator {
     public final Object mAuthenticationLock = new Object();
 
     public GoogleAuthenticator(Context context) {
-        mTokenCache = new TokenCache(context);
+        mTokenCache = new TokenCache(context, TokenCache.GOOGLE_PREFFILE);
     }
 
     public void authenticate(MobileServiceClient client, boolean update, IAuthenticateClient authenticateClient) {
