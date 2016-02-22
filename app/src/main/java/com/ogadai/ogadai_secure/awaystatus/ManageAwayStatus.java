@@ -29,7 +29,7 @@ public class ManageAwayStatus implements IManageAwayStatus {
     private static final String ATTEMPTSPREF = "attempts";
 
     private static final int MAXATTEMPTS = 5;
-    private static final int RETRYDELAYSECONDS = 6;
+    private static final int RETRYDELAYSECONDS = 30;
 
     private static final ScheduledExecutorService mScheduler =
             Executors.newScheduledThreadPool(1);
