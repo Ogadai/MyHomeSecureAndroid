@@ -3,6 +3,7 @@ package com.ogadai.ogadai_secure.awaystatus;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -21,15 +22,32 @@ public class GeofenceSetup implements GoogleApiClient.OnConnectionFailedListener
 
     private final String mKey = "ogadai-secure-home-geofence";
 
-    public void setup(Context context) {
-        System.out.println("Setting up geofence");
+    public static final String LOCATION_PREFFILE = "hub_loc";
+    private static final String LATITUDEPREF = "latitude";
+    private static final String LONGITUDEPREF = "longitude";
+    private static final String RADIUSPREF = "radius";
+
+    public GeofenceSetup(Context context) {
         mContext = context;
+    }
+
+    public void setLocation(double latitude, double longitude, float radius) {
+        SharedPreferences prefs = mContext.getSharedPreferences(LOCATION_PREFFILE, Context.MODE_PRIVATE);
+
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.putFloat(LATITUDEPREF, (float) latitude);
+        editor.putFloat(LONGITUDEPREF, (float) longitude);
+        editor.putFloat(RADIUSPREF, radius);
+        editor.commit();
+    }
+
+    public void setup() {
+        System.out.println("Setting up geofence");
         doGoogleApiClientSetup(true);
     }
 
-    public void remove(Context context) {
+    public void remove() {
         System.out.println("Uninstalling geofence");
-        mContext = context;
         doGoogleApiClientSetup(false);
     }
 
@@ -103,9 +121,14 @@ public class GeofenceSetup implements GoogleApiClient.OnConnectionFailedListener
     }
 
     private Geofence getGeoFence() {
+        SharedPreferences prefs = mContext.getSharedPreferences(LOCATION_PREFFILE, Context.MODE_PRIVATE);
+        double latitide = prefs.getFloat(LATITUDEPREF, 52);
+        double longitude = prefs.getFloat(LONGITUDEPREF, -2.5f);
+        float radius = prefs.getFloat(RADIUSPREF, 500);
+
         return new Geofence.Builder()
                 .setRequestId(mKey)
-                .setCircularRegion(51.477996, -2.604144, 300)
+                .setCircularRegion(latitide, longitude, radius)
                 .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER | Geofence.GEOFENCE_TRANSITION_EXIT)
                 .setExpirationDuration(Geofence.NEVER_EXPIRE)
                 .build();

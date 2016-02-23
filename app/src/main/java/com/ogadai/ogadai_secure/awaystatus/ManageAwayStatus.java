@@ -22,6 +22,9 @@ import java.util.concurrent.TimeUnit;
  * Created by alee on 22/02/2016.
  */
 public class ManageAwayStatus implements IManageAwayStatus {
+    public final static String EXITED_EVENT = "exited";
+    public final static String ENTERED_EVENT = "entered";
+
     private Context mContext;
 
     private static final String PREFFILE = "pending_status";
@@ -30,6 +33,7 @@ public class ManageAwayStatus implements IManageAwayStatus {
 
     private static final int MAXATTEMPTS = 5;
     private static final int RETRYDELAYSECONDS = 30;
+    private static final int EXITDELAYSECONDS = 120;
 
     private static final ScheduledExecutorService mScheduler =
             Executors.newScheduledThreadPool(1);
@@ -43,7 +47,13 @@ public class ManageAwayStatus implements IManageAwayStatus {
     public void setAwayStatus(String action) {
         PendingStatus status = new PendingStatus(action, 0);
         set(status);
-        trySubmitOnThread(status);
+
+        if (action.compareTo(EXITED_EVENT) == 0) {
+            // Exit delay to avoid frequent out/in notifications
+            trySubmitAfterDelay(EXITDELAYSECONDS);
+        } else {
+            trySubmitOnThread(status);
+        }
     }
 
     @Override
@@ -105,15 +115,19 @@ public class ManageAwayStatus implements IManageAwayStatus {
                 set(status);
 
                 // Retry after delay
-                mTimerHandle = mScheduler.schedule(new Runnable() {
-                    @Override
-                    public void run() {
-                        mTimerHandle = null;
-                        retryPending();
-                    }
-                }, RETRYDELAYSECONDS, TimeUnit.SECONDS);
+                trySubmitAfterDelay(RETRYDELAYSECONDS);
             }
         }
+    }
+
+    private void trySubmitAfterDelay(int delaySeconds) {
+        mTimerHandle = mScheduler.schedule(new Runnable() {
+            @Override
+            public void run() {
+                mTimerHandle = null;
+                retryPending();
+            }
+        }, delaySeconds, TimeUnit.SECONDS);
     }
 
     private void postStatus(String action) throws IOException, AuthenticationException {

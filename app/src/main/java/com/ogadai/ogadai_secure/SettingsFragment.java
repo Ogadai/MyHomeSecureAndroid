@@ -59,8 +59,8 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
             if (enterExitEnabled) {
                 requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, FINE_LOCATION_REQUEST);
             } else {
-                IEnterExitSetup enterExitSetup = new EnterExitSetup();
-                enterExitSetup.remove(getActivity());
+                IEnterExitSetup enterExitSetup = new EnterExitSetup(getActivity());
+                enterExitSetup.remove();
             }
         }
     }
@@ -70,8 +70,8 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
         switch (requestCode) {
             case FINE_LOCATION_REQUEST:
                 if (PackageManager.PERMISSION_GRANTED == getActivity().checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)) {
-                    IEnterExitSetup enterExitSetup = new EnterExitSetup();
-                    enterExitSetup.setup(getActivity());
+                    IEnterExitSetup enterExitSetup = new EnterExitSetup(getActivity());
+                    enterExitSetup.setup();
                 } else {
                     SharedPreferences preferences = getPreferenceScreen().getSharedPreferences();
                     preferences.edit().remove(KEY_PREF_ENTEREXIT).commit();

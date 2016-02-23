@@ -14,8 +14,8 @@ public class BootCompletedReceiver extends BroadcastReceiver {
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(context);
         if (sharedPref.getBoolean(SettingsFragment.KEY_PREF_ENTEREXIT, false)) {
             System.out.println("Boot action restoring geofence");
-            GeofenceSetup geoFence = new GeofenceSetup();
-            geoFence.setup(context);
+            GeofenceSetup geoFence = new GeofenceSetup(context);
+            geoFence.setup();
         }
         System.out.println("Boot action completed");
     }

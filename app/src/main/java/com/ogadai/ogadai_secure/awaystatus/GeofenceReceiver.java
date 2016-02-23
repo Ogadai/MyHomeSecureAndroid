@@ -23,7 +23,8 @@ public class GeofenceReceiver extends BroadcastReceiver {
             // Test that a valid transition was reported
             if ((transition == Geofence.GEOFENCE_TRANSITION_ENTER)
                     || (transition == Geofence.GEOFENCE_TRANSITION_EXIT)) {
-                postEvent(context, transition == Geofence.GEOFENCE_TRANSITION_ENTER ? "entered" : "exited");
+                postEvent(context, transition == Geofence.GEOFENCE_TRANSITION_ENTER
+                        ? ManageAwayStatus.ENTERED_EVENT : ManageAwayStatus.EXITED_EVENT);
             }
         } else {
             // Log the error.
