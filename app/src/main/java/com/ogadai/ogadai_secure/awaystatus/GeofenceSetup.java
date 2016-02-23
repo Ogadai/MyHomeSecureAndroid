@@ -122,13 +122,13 @@ public class GeofenceSetup implements GoogleApiClient.OnConnectionFailedListener
 
     private Geofence getGeoFence() {
         SharedPreferences prefs = mContext.getSharedPreferences(LOCATION_PREFFILE, Context.MODE_PRIVATE);
-        double latitide = prefs.getFloat(LATITUDEPREF, 52);
+        double latitude = prefs.getFloat(LATITUDEPREF, 52);
         double longitude = prefs.getFloat(LONGITUDEPREF, -2.5f);
         float radius = prefs.getFloat(RADIUSPREF, 500);
 
         return new Geofence.Builder()
                 .setRequestId(mKey)
-                .setCircularRegion(latitide, longitude, radius)
+                .setCircularRegion(latitude, longitude, radius)
                 .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER | Geofence.GEOFENCE_TRANSITION_EXIT)
                 .setExpirationDuration(Geofence.NEVER_EXPIRE)
                 .build();

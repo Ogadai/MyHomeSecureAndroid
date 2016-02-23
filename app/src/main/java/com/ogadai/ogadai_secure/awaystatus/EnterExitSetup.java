@@ -106,7 +106,7 @@ public class EnterExitSetup implements IEnterExitSetup {
         IServerRequest serverRequest = new ServerRequest("RhCLppCOuzkwkzZcDDLGcZQTOTwUBj90", cachedToken.getToken());
 
         try {
-            String response = serverRequest.get("https://ogadai-secure.azure-mobile.net/api/HubLocation");
+            String response = serverRequest.get("https://ogadai-secure.azure-mobile.net/api/hublocation");
 
             Gson gson = new Gson();
             HubLocationMessage location = gson.fromJson(response, HubLocationMessage.class);
