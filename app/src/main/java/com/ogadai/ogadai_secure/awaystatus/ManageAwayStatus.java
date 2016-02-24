@@ -5,10 +5,8 @@ import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
-import android.os.Handler;
 
-import com.ogadai.ogadai_secure.ShowNotification;
-import com.ogadai.ogadai_secure.auth.CachedToken;
+import com.ogadai.ogadai_secure.notifications.ShowNotification;
 
 import org.glassfish.tyrus.client.auth.AuthenticationException;
 

@@ -1,17 +1,12 @@
 package com.ogadai.ogadai_secure;
 
-import android.Manifest;
 import android.app.Activity;
 
 import android.app.ActionBar;
 import android.app.AlertDialog;
 import android.app.Fragment;
 import android.app.FragmentManager;
-import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
 import android.support.v4.widget.DrawerLayout;
 import android.widget.ProgressBar;
 
@@ -27,9 +22,11 @@ import com.microsoft.windowsazure.mobileservices.http.ServiceFilterRequest;
 import com.microsoft.windowsazure.mobileservices.http.ServiceFilterResponse;
 import com.ogadai.ogadai_secure.auth.GoogleAuthenticator;
 import com.ogadai.ogadai_secure.auth.IAuthenticateClient;
-import com.ogadai.ogadai_secure.awaystatus.GeofenceSetup;
 
 import java.net.MalformedURLException;
+
+import com.microsoft.windowsazure.notifications.NotificationsManager;
+import com.ogadai.ogadai_secure.notifications.HomeNotificationHandler;
 
 public class MainActivity extends Activity
         implements NavigationDrawerFragment.NavigationDrawerCallbacks, IMainActivity {
@@ -37,7 +34,11 @@ public class MainActivity extends Activity
     /**
      * Mobile Service Client reference
      */
-    private MobileServiceClient mClient;
+    private static MobileServiceClient mClient;
+
+    public static MobileServiceClient getClient() {
+        return mClient;
+    }
 
     /**
      * Fragment managing the behaviors, interactions and presentation of the navigation drawer.

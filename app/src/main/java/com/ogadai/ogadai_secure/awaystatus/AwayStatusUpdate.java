@@ -1,13 +1,11 @@
 package com.ogadai.ogadai_secure.awaystatus;
 
 import android.content.Context;
-import android.os.AsyncTask;
 import android.util.Log;
 
 import com.google.gson.Gson;
 import com.ogadai.ogadai_secure.IServerRequest;
 import com.ogadai.ogadai_secure.ServerRequest;
-import com.ogadai.ogadai_secure.ShowNotification;
 import com.ogadai.ogadai_secure.auth.CachedToken;
 import com.ogadai.ogadai_secure.auth.ITokenCache;
 import com.ogadai.ogadai_secure.auth.TokenCache;

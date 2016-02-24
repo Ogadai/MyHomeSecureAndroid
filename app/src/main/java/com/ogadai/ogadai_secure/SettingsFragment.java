@@ -14,15 +14,21 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import com.microsoft.windowsazure.notifications.NotificationsManager;
 import com.ogadai.ogadai_secure.awaystatus.EnterExitSetup;
 import com.ogadai.ogadai_secure.awaystatus.GeofenceSetup;
 import com.ogadai.ogadai_secure.awaystatus.IEnterExitSetup;
+import com.ogadai.ogadai_secure.notifications.HomeNotificationHandler;
 
 /**
  * A simple {@link Fragment} subclass.
  */
 public class SettingsFragment extends PreferenceFragment implements SharedPreferences.OnSharedPreferenceChangeListener {
+    public static final String NOTIFICATION_SENDER_ID = "724129164049";
+
     public static final String KEY_PREF_ENTEREXIT = "pref_enterexit";
+    public static final String KEY_PREF_NOTIFICATIONS = "pref_notifications";
+
     private static final int FINE_LOCATION_REQUEST = 7784;
 
     public SettingsFragment() {
@@ -53,15 +59,20 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
 
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
         if (key.equals(KEY_PREF_ENTEREXIT)) {
-            boolean enterExitEnabled = sharedPreferences.getBoolean(key, false);
-            System.out.println("Enter/Exit events " + (enterExitEnabled ? "enabled" : "disabled"));
+            setEnterExitEnabled(sharedPreferences.getBoolean(key, false));
+        } else if (key.equals(KEY_PREF_NOTIFICATIONS)) {
+            setNotificationsEnabled(sharedPreferences.getBoolean(key, false));
+        }
+    }
 
-            if (enterExitEnabled) {
-                requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, FINE_LOCATION_REQUEST);
-            } else {
-                IEnterExitSetup enterExitSetup = new EnterExitSetup(getActivity());
-                enterExitSetup.remove();
-            }
+    private void setEnterExitEnabled(boolean enterExitEnabled) {
+        System.out.println("Enter/Exit events " + (enterExitEnabled ? "enabled" : "disabled"));
+
+        if (enterExitEnabled) {
+            requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, FINE_LOCATION_REQUEST);
+        } else {
+            IEnterExitSetup enterExitSetup = new EnterExitSetup(getActivity());
+            enterExitSetup.remove();
         }
     }
 
@@ -77,6 +88,16 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
                     preferences.edit().remove(KEY_PREF_ENTEREXIT).commit();
                 }
                 break;
+        }
+    }
+
+    private void setNotificationsEnabled(boolean notificationsEnabled) {
+        if (notificationsEnabled) {
+            NotificationsManager.handleNotifications(getActivity(),
+                    NOTIFICATION_SENDER_ID,
+                    HomeNotificationHandler.class);
+        } else {
+            NotificationsManager.stopHandlingNotifications(getActivity());
         }
     }
 }

@@ -1,22 +1,17 @@
 package com.ogadai.ogadai_secure.awaystatus;
 
-import android.Manifest;
 import android.content.Context;
 import android.os.AsyncTask;
 import android.util.Log;
 
 import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;
-import com.ogadai.ogadai_secure.HistoryItem;
 import com.ogadai.ogadai_secure.IServerRequest;
 import com.ogadai.ogadai_secure.ServerRequest;
-import com.ogadai.ogadai_secure.ShowNotification;
-import com.ogadai.ogadai_secure.UpdateStatesMessage;
+import com.ogadai.ogadai_secure.notifications.ShowNotification;
 import com.ogadai.ogadai_secure.auth.CachedToken;
 import com.ogadai.ogadai_secure.auth.ITokenCache;
 import com.ogadai.ogadai_secure.auth.TokenCache;
-
-import org.glassfish.tyrus.client.auth.AuthenticationException;
 
 /**
  * Created by alee on 22/02/2016.
