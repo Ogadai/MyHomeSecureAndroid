@@ -18,14 +18,14 @@ import org.glassfish.tyrus.client.auth.AuthenticationException;
 
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 
 public class HistoryFragment extends Fragment {
 
     private HistoryRecyclerViewAdapter mHistoryAdapter;
     private List<HistoryItem> mHistoryList = new ArrayList<HistoryItem>();
-
-    private IServerRequest mServerRequest;
 
     /**
      * Mandatory empty constructor for the fragment manager to instantiate the
@@ -61,47 +61,32 @@ public class HistoryFragment extends Fragment {
     }
 
     public void connect(){
-        ITokenCache tokenCache = new TokenCache(getActivity(), TokenCache.GOOGLE_PREFFILE);
-        CachedToken cachedToken = tokenCache.get();
-        if (cachedToken == null) {
-            getMainActivity().doAuthenticate(true);
-            return;
-        }
-
         getMainActivity().showProgressBar();
-        mServerRequest = new ServerRequest("RhCLppCOuzkwkzZcDDLGcZQTOTwUBj90", cachedToken.getToken());
 
-        AsyncTask<String, Void, String> task = new AsyncTask<String, Void, String>() {
-            protected String doInBackground(String... urls) {
+        AsyncTask<String, Void, Void> task = new AsyncTask<String, Void, Void>() {
+            protected Void doInBackground(String... urls) {
                 try {
-                    final String result = mServerRequest.get("https://ogadai-secure.azure-mobile.net/api/log");
-
-                    System.out.println("Response: " + result);
-
-                    getActivity().runOnUiThread(new Runnable() {
-
+                    HistoryItem[] items = ServerRequest.get(getActivity(), "log", HistoryItem[].class);
+                    Arrays.sort(items, new Comparator<HistoryItem>() {
                         @Override
-                        public void run() {
-                            HistoryItem[] items = HistoryItem.FromJSONArray(result);
-                            mHistoryList.clear();
-                            for(HistoryItem item : items) {
-                                mHistoryList.add(item);
-                            }
-                            mHistoryAdapter.notifyDataSetChanged();
+                        public int compare(HistoryItem lhs, HistoryItem rhs) {
+                            return rhs.getTime().compareTo(lhs.getTime());
                         }
                     });
 
-                    return result;
+                    updateHistoryList(items);
+
+                    return null;
                 }
                 catch(AuthenticationException authEx) {
                     System.out.println("error getting history: " + authEx.toString());
                     getMainActivity().doAuthenticate(true);
-                    return "";
+                    return null;
                 }
                 catch(Exception e) {
                     System.out.println("error getting JSON: " + e.toString());
                     getMainActivity().createAndShowDialogFromTask(e, "Error getting log");
-                    return "";
+                    return null;
                 }
                 finally {
                     getMainActivity().hideProgressBar();
@@ -113,6 +98,20 @@ public class HistoryFragment extends Fragment {
             }
         };
         task.execute();
+    }
+
+    private void updateHistoryList(final HistoryItem[] items) {
+        getActivity().runOnUiThread(new Runnable() {
+
+            @Override
+            public void run() {
+                mHistoryList.clear();
+                for(HistoryItem item : items) {
+                    mHistoryList.add(item);
+                }
+                mHistoryAdapter.notifyDataSetChanged();
+            }
+        });
     }
 
     @Override

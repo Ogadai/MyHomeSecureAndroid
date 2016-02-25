@@ -41,6 +41,10 @@ public class ManageAwayStatus implements IManageAwayStatus {
         mContext = context;
     }
 
+    public static ScheduledExecutorService getScheduler() {
+        return mScheduler;
+    }
+
     @Override
     public void setAwayStatus(String action) {
         PendingStatus status = new PendingStatus(action, 0);

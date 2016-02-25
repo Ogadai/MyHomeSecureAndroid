@@ -8,11 +8,13 @@ import android.content.Context;
 import android.content.Intent;
 import android.media.RingtoneManager;
 import android.net.Uri;
+import android.os.Bundle;
 import android.support.v4.app.TaskStackBuilder;
 import android.support.v4.app.NotificationCompat;
 
 import com.ogadai.ogadai_secure.MainActivity;
 import com.ogadai.ogadai_secure.R;
+import com.ogadai.ogadai_secure.SetHomeActivity;
 import com.ogadai.ogadai_secure.StateItem;
 
 /**
@@ -33,24 +35,9 @@ public class ShowNotification {
     }
 
     public void show(String title, String content, int id) {
-        NotificationCompat.Builder builder =
-                new NotificationCompat.Builder(mContext)
-                        .setSmallIcon(R.drawable.notification)
-                        .setContentTitle(title)
-                        .setAutoCancel(true)
-                        .setContentText(content);
-
-        if (id == STATEID) {
-            Uri notifySound = Uri.parse(ContentResolver.SCHEME_ANDROID_RESOURCE
-                    + "://" + mContext.getPackageName() + "/raw/alarm");
-
-            builder = builder
-                    .setSound(notifySound)
-                    .setDefaults(Notification.DEFAULT_LIGHTS | Notification.DEFAULT_VIBRATE);
-        }
-
         // Creates an explicit intent for an Activity in your app
         Intent resultIntent = new Intent(mContext, MainActivity.class);
+        resultIntent.putExtra(MainActivity.EXTRA_SETHOME, false);
 
         // The stack builder object will contain an artificial back stack for the
         // started Activity.
@@ -61,16 +48,42 @@ public class ShowNotification {
         stackBuilder.addParentStack(MainActivity.class);
         // Adds the Intent that starts the Activity to the top of the stack
         stackBuilder.addNextIntent(resultIntent);
-        PendingIntent resultPendingIntent =
-                stackBuilder.getPendingIntent(
-                        0,
-                        PendingIntent.FLAG_UPDATE_CURRENT
-                );
-        builder.setContentIntent(resultPendingIntent);
+        PendingIntent mainActivityIntent =
+                stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
+
+        NotificationCompat.Builder builder =
+                new NotificationCompat.Builder(mContext)
+                        .setSmallIcon(R.drawable.notification)
+                        .setContentTitle(title)
+                        .setAutoCancel(true)
+                        .setContentText(content)
+                        .setContentIntent(mainActivityIntent);
+
+        if (id == STATEID) {
+            Uri notifySound = Uri.parse(ContentResolver.SCHEME_ANDROID_RESOURCE
+                    + "://" + mContext.getPackageName() + "/raw/alarm");
+
+            Intent homeIntent = new Intent(mContext, SetHomeActivity.class);
+            PendingIntent pHomeIntent = PendingIntent.getActivity(mContext, 0, homeIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+            builder = builder
+                    .setSound(notifySound)
+                    .setDefaults(Notification.DEFAULT_LIGHTS | Notification.DEFAULT_VIBRATE)
+                    .addAction(0, mContext.getString(R.string.notify_action_view), mainActivityIntent)
+                    .addAction(R.drawable.notification, mContext.getString(R.string.notify_action_home), pHomeIntent);
+        }
+
         NotificationManager notificationManager =
                 (NotificationManager) mContext.getSystemService(Context.NOTIFICATION_SERVICE);
 
+
         // mId allows you to update the notification later on.
         notificationManager.notify(id, builder.build());
+    }
+
+    public void clear() {
+        NotificationManager notificationManager =
+                (NotificationManager) mContext.getSystemService(Context.NOTIFICATION_SERVICE);
+        notificationManager.cancelAll();
     }
 }

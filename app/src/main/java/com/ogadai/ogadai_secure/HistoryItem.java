@@ -45,20 +45,4 @@ public class HistoryItem {
 
     public Date getTime() { return mTime; }
     public final void setTime(Date time) { mTime = time; }
-
-    public static HistoryItem[] FromJSONArray(String json) {
-        Gson gson = new GsonBuilder()
-                .setDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
-                .create();
-        HistoryItem[] items = gson.fromJson(json, HistoryItem[].class);
-
-        Arrays.sort(items, new Comparator<HistoryItem>() {
-            @Override
-            public int compare(HistoryItem lhs, HistoryItem rhs) {
-                return rhs.getTime().compareTo(lhs.getTime());
-            }
-        });
-
-        return items;
-    }
 }

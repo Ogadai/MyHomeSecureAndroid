@@ -16,6 +16,7 @@ import com.ogadai.ogadai_secure.auth.ITokenCache;
 import com.ogadai.ogadai_secure.auth.TokenCache;
 import com.ogadai.ogadai_secure.awaystatus.AwayStatusUpdate;
 import com.ogadai.ogadai_secure.awaystatus.IAwayStatusUpdate;
+import com.ogadai.ogadai_secure.awaystatus.ManageAwayStatus;
 import com.ogadai.ogadai_secure.socket.HomeSecureSocket;
 import com.ogadai.ogadai_secure.socket.IHomeSecureSocket;
 import com.ogadai.ogadai_secure.socket.IHomeSecureSocketClient;
@@ -150,7 +151,7 @@ public class MonitorStatesFragment extends Fragment implements IHomeSecureSocket
     }
 
     private void ChangedAwayState(StateItem state) {
-        final String action = state.getActive() ? "exited" : "entered";
+        final String action = state.getActive() ? ManageAwayStatus.EXITED_EVENT : ManageAwayStatus.ENTERED_EVENT;
 
         AsyncTask<String, Void, Void> task = new AsyncTask<String, Void, Void>() {
             @Override

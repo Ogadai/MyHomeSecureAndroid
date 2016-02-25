@@ -6,6 +6,8 @@ import android.os.Bundle;
 
 import com.microsoft.windowsazure.notifications.NotificationsHandler;
 import com.ogadai.ogadai_secure.MainActivity;
+import com.ogadai.ogadai_secure.ServerRequest;
+import com.ogadai.ogadai_secure.awaystatus.HubLocationMessage;
 
 import java.io.IOException;
 
@@ -18,13 +20,17 @@ public class HomeNotificationHandler extends NotificationsHandler {
     public void onRegistered(Context context,  final String gcmRegistrationId) {
         super.onRegistered(context, gcmRegistrationId);
 
+        final Context fContext = context;
         new AsyncTask<Void, Void, Void>() {
 
             protected Void doInBackground(Void... params) {
                 try {
-                    String[] tags = new String[] { "my-test-tag" };
-                    System.out.println("registering notifications handler");
-                    MainActivity.getClient().getPush().register(gcmRegistrationId, tags);
+                    String hubId = getHubId(fContext);
+                    if (hubId != null) {
+                        String[] tags = new String[]{hubId};
+                        System.out.println("registering notifications handler");
+                        MainActivity.getClient().getPush().register(gcmRegistrationId, tags);
+                    }
                     return null;
                 }
                 catch(Exception e) {
@@ -73,5 +79,19 @@ public class HomeNotificationHandler extends NotificationsHandler {
             e.printStackTrace();
         }
     }
+
+    private String getHubId(Context context) {
+        try {
+            HubLocationMessage location = ServerRequest.get(context, "hublocation", HubLocationMessage.class);
+            return location.getHubId();
+        } catch (Exception e) {
+            System.out.println("Error getting hub id - " + e.toString());
+
+            ShowNotification test = new ShowNotification(context);
+            test.show("Error getting hub location", e.toString());
+            return null;
+        }
+    }
+
 }
 

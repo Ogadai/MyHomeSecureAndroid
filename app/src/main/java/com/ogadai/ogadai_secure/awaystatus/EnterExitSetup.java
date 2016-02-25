@@ -5,7 +5,6 @@ import android.os.AsyncTask;
 import android.util.Log;
 
 import com.google.gson.Gson;
-import com.google.gson.annotations.SerializedName;
 import com.ogadai.ogadai_secure.IServerRequest;
 import com.ogadai.ogadai_secure.ServerRequest;
 import com.ogadai.ogadai_secure.notifications.ShowNotification;
@@ -53,18 +52,8 @@ public class EnterExitSetup implements IEnterExitSetup {
     private void requestNewToken() {
         System.out.println("requesting new token");
 
-        ITokenCache googleToken = new TokenCache(mContext, TokenCache.GOOGLE_PREFFILE);
-        CachedToken cachedToken = googleToken.get();
-        if (cachedToken == null) {
-            Log.e("geofence", "No cached token available");
-        }
-        IServerRequest serverRequest = new ServerRequest("RhCLppCOuzkwkzZcDDLGcZQTOTwUBj90", cachedToken.getToken());
-
         try {
-            String response = serverRequest.post("https://ogadai-secure.azure-mobile.net/api/SetupToken", null);
-
-            Gson gson = new Gson();
-            AwayStatusMessage tokenMessage = gson.fromJson(response, AwayStatusMessage.class);
+            AwayStatusMessage tokenMessage = ServerRequest.post(mContext, "setuptoken", AwayStatusMessage.class);
 
             ITokenCache awayStatusToken = new TokenCache(mContext, TokenCache.AWAYSTATUS_PREFFILE);
             awayStatusToken.set(new CachedToken(tokenMessage.getUserName(), tokenMessage.getToken()));
@@ -93,18 +82,8 @@ public class EnterExitSetup implements IEnterExitSetup {
     }
 
     private void getLocation() {
-        ITokenCache googleToken = new TokenCache(mContext, TokenCache.GOOGLE_PREFFILE);
-        CachedToken cachedToken = googleToken.get();
-        if (cachedToken == null) {
-            Log.e("geofence", "No cached token available");
-        }
-        IServerRequest serverRequest = new ServerRequest("RhCLppCOuzkwkzZcDDLGcZQTOTwUBj90", cachedToken.getToken());
-
         try {
-            String response = serverRequest.get("https://ogadai-secure.azure-mobile.net/api/hublocation");
-
-            Gson gson = new Gson();
-            HubLocationMessage location = gson.fromJson(response, HubLocationMessage.class);
+            HubLocationMessage location = ServerRequest.get(mContext, "hublocation", HubLocationMessage.class);
 
             mGeofenceSetup.setLocation(location.getLatitude(), location.getLongitude(), location.getRadius());
             mGeofenceSetup.setup();
@@ -116,45 +95,4 @@ public class EnterExitSetup implements IEnterExitSetup {
         }
     }
 
-    private class HubLocationMessage
-    {
-        @SerializedName("latitude")
-        private double mLatitude;
-
-        @SerializedName("longitude")
-        private double mLongitude;
-
-        @SerializedName("radius")
-        private float mRadius;
-
-        public HubLocationMessage(double latitude, double longitude, float radius) {
-            setLatitude(latitude);
-            setLongitude(longitude);
-            setRadius(radius);
-        }
-
-        public double getLatitude() {
-            return mLatitude;
-        }
-
-        public void setLatitude(double latitude) {
-            mLatitude = latitude;
-        }
-
-        public double getLongitude() {
-            return mLongitude;
-        }
-
-        public void setLongitude(double longitude) {
-            mLongitude = longitude;
-        }
-
-        public float getRadius() {
-            return mRadius;
-        }
-
-        public void setRadius(float radius) {
-            mRadius = radius;
-        }
-    }
 }

@@ -4,6 +4,7 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.location.Location;
 import android.os.Bundle;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -12,7 +13,14 @@ import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.GeofencingRequest;
+import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.LocationListener;
+
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 public class GeofenceSetup implements GoogleApiClient.OnConnectionFailedListener {
 
@@ -43,26 +51,42 @@ public class GeofenceSetup implements GoogleApiClient.OnConnectionFailedListener
 
     public void setup() {
         System.out.println("Setting up geofence");
-        doGoogleApiClientSetup(true);
+        doGoogleApiClientSetup(new Runnable() {
+            @Override
+            public void run() {
+                addGeofence();
+            }
+        });
     }
 
     public void remove() {
         System.out.println("Uninstalling geofence");
-        doGoogleApiClientSetup(false);
+        doGoogleApiClientSetup(new Runnable() {
+            @Override
+            public void run() {
+                removeGeofence();
+            }
+        });
     }
 
-    public void doGoogleApiClientSetup(final boolean settingUp) {
+    public void checkIfHome(final CheckIfHomeCallback callback) {
+        System.out.println("Checking if user is home");
+        doGoogleApiClientSetup(new Runnable() {
+            @Override
+            public void run() {
+                checkIfUserHome(callback);
+            }
+        });
+    }
+
+    public void doGoogleApiClientSetup(final Runnable callback) {
         mGoogleApiClient = new GoogleApiClient.Builder(mContext)
                 .addConnectionCallbacks(new GoogleApiClient.ConnectionCallbacks() {
                     @Override
                     public void onConnected(Bundle bundle) {
                         System.out.println("GoogleApiClient connected");
 
-                        if (settingUp) {
-                            addGeofence();
-                        } else {
-                            removeGeofence();
-                        }
+                        callback.run();
                     }
 
                     @Override
@@ -93,10 +117,14 @@ public class GeofenceSetup implements GoogleApiClient.OnConnectionFailedListener
                     mGoogleApiClient.disconnect();
                 }
             });
+        } catch(SecurityException sec) {
+            System.out.println("Security exception setting up geofence - " + sec.toString());
+            mGoogleApiClient.disconnect();
         } catch(Exception e) {
             System.out.println("Error setting up geofence - " + e.toString());
             mGoogleApiClient.disconnect();
         }
+
     }
 
     private void removeGeofence() {
@@ -158,5 +186,53 @@ public class GeofenceSetup implements GoogleApiClient.OnConnectionFailedListener
     @Override
     public void onConnectionFailed(ConnectionResult connectionResult) {
         System.out.println("GoogleApiClient connection failed - " + connectionResult.getErrorMessage());
+    }
+
+    private void checkIfUserHome(final CheckIfHomeCallback callback) {
+        SharedPreferences prefs = mContext.getSharedPreferences(LOCATION_PREFFILE, Context.MODE_PRIVATE);
+        final float radius = prefs.getFloat(RADIUSPREF, 500);
+        final Location homeLocation = new Location("Google");
+        homeLocation.setLatitude(prefs.getFloat(LATITUDEPREF, 52));
+        homeLocation.setLongitude(prefs.getFloat(LONGITUDEPREF, -2.5f));
+
+        try {
+            final LocationListener listener = new LocationListener() {
+                @Override
+                public void onLocationChanged(Location location) {
+                    System.out.println("Location update - lat: " + location.getLatitude() + ", lng: " + location.getLongitude());
+
+                    float distance = location.distanceTo(homeLocation);
+                    if (distance < radius) {
+                        System.out.println("Stopping location updates - user is home");
+                        LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
+                        mGoogleApiClient.disconnect();
+
+                        // Count this as home
+                        callback.OnUserIsHome();
+                    }
+                }
+            };
+
+            System.out.println("Requesting location updates");
+            LocationRequest locationRequest = new LocationRequest();
+            locationRequest.setInterval(5000);
+            locationRequest.setFastestInterval(2000);
+            locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+
+            LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, locationRequest, listener);
+
+            // Stop updates after 30 seconds if not home
+            ManageAwayStatus.getScheduler().schedule(new Runnable() {
+                @Override
+                public void run() {
+                    System.out.println("Stopping location updates - user not home");
+                    LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, listener);
+                    mGoogleApiClient.disconnect();
+                }
+            }, 30, TimeUnit.SECONDS);
+
+        } catch (SecurityException sec) {
+            mGoogleApiClient.disconnect();
+        }
     }
 }

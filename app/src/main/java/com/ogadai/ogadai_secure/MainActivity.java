@@ -1,8 +1,7 @@
 package com.ogadai.ogadai_secure;
 
-import android.app.Activity;
-
 import android.app.ActionBar;
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Fragment;
 import android.app.FragmentManager;
@@ -22,14 +21,13 @@ import com.microsoft.windowsazure.mobileservices.http.ServiceFilterRequest;
 import com.microsoft.windowsazure.mobileservices.http.ServiceFilterResponse;
 import com.ogadai.ogadai_secure.auth.GoogleAuthenticator;
 import com.ogadai.ogadai_secure.auth.IAuthenticateClient;
+import com.ogadai.ogadai_secure.notifications.ShowNotification;
 
 import java.net.MalformedURLException;
 
-import com.microsoft.windowsazure.notifications.NotificationsManager;
-import com.ogadai.ogadai_secure.notifications.HomeNotificationHandler;
-
 public class MainActivity extends Activity
         implements NavigationDrawerFragment.NavigationDrawerCallbacks, IMainActivity {
+    public static final String EXTRA_SETHOME = "com.ogadai.ogadai_secure.setHome";
 
     /**
      * Mobile Service Client reference
@@ -73,6 +71,8 @@ public class MainActivity extends Activity
                 (DrawerLayout) findViewById(R.id.drawer_layout));
 
         doAuthenticate(false);
+
+        clearNotifications();
     }
 
     protected void onStart() {
@@ -107,6 +107,11 @@ public class MainActivity extends Activity
         } catch (MalformedURLException e) {
             System.out.println(e.getMessage());
         }
+    }
+
+    private void clearNotifications() {
+        ShowNotification showNotification = new ShowNotification(this);
+        showNotification.clear();
     }
 
     private void authenticateSuccessful() {

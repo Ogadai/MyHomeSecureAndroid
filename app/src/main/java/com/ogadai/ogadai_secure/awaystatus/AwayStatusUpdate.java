@@ -34,12 +34,7 @@ public class AwayStatusUpdate implements IAwayStatusUpdate {
             return;
         }
 
-        IServerRequest serverRequest = new ServerRequest("RhCLppCOuzkwkzZcDDLGcZQTOTwUBj90");
-
         AwayStatusMessage awayStatus = new AwayStatusMessage(cachedToken.getUser(), cachedToken.getToken(), action);
-        Gson gson = new Gson();
-        String message = gson.toJson(awayStatus);
-
-        serverRequest.post("https://ogadai-secure.azure-mobile.net/api/AwayStatus", message);
+        ServerRequest.post(null, "awaystatus", awayStatus);
     }
 }
