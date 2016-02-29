@@ -111,22 +111,17 @@ public class CameraFragment extends Fragment {
         if (mStatus.getStreaming()) return;
         mStatus.setStreaming(true);
 
+        int index = 1;
         while(mStatus.getStreaming()) {
 
             HttpURLConnection urlConnection = null;
             try {
-                urlConnection = ServerRequest.setupConnectionWithAuth(getActivity(), "GET", "camerasnapshot?node=garage", null);
-                final Bitmap bmp = BitmapFactory.decodeStream(urlConnection.getInputStream());
+                String path = "camerasnapshot?node=garage&i=" + Integer.toString(index);
+                urlConnection = ServerRequest.setupConnectionWithAuth(getActivity(), "GET", path, null);
+                Bitmap bmp = BitmapFactory.decodeStream(urlConnection.getInputStream());
 
-                Activity activity = getActivity();
-                if (mStatus.getStreaming() && activity != null) {
-                    activity.runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            mImageView.setImageBitmap(bmp);
-                        }
-                    });
-                }
+                setImageBitmap(bmp);
+                index++;
             } catch(Exception e) {
                 System.out.println("Error downloading snapshot - " + e.getMessage());
                 getMainActivity().createAndShowDialogFromTask(e, "Error downloading snapshot");
@@ -134,6 +129,19 @@ public class CameraFragment extends Fragment {
             } finally {
                 if (urlConnection != null) urlConnection.disconnect();
             }
+        }
+    }
+
+    private void setImageBitmap(final Bitmap bmp)
+    {
+        Activity activity = getActivity();
+        if (mStatus.getStreaming() && activity != null) {
+            activity.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    mImageView.setImageBitmap(bmp);
+                }
+            });
         }
     }
 
