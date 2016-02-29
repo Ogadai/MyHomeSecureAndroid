@@ -120,7 +120,7 @@ public class MainActivity extends Activity
 
     private Fragment[] mFragments;
     private void clearFragments() {
-        mFragments = new Fragment[3];
+        mFragments = new Fragment[4];
     }
 
     @Override
@@ -137,6 +137,9 @@ public class MainActivity extends Activity
                     newFragment = new HistoryFragment();
                     break;
                 case 2:
+                    newFragment = new CameraFragment();
+                    break;
+                case 3:
                     newFragment = new SettingsFragment();
                     break;
             }
@@ -159,6 +162,9 @@ public class MainActivity extends Activity
                 break;
             case 2:
                 mTitle = getString(R.string.title_section3);
+                break;
+            case 3:
+                mTitle = getString(R.string.title_section4);
                 break;
         }
         restoreActionBar();

@@ -15,6 +15,7 @@ import org.glassfish.tyrus.client.auth.AuthenticationException;
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -26,8 +27,6 @@ import java.nio.charset.StandardCharsets;
 public class ServerRequest implements IServerRequest {
     public static String APPKEY = "RhCLppCOuzkwkzZcDDLGcZQTOTwUBj90";
     public static String ROOTPATH = "https://ogadai-secure.azure-mobile.net/api/";
-
-
 
     public static String get(Context context, String path) throws IOException, AuthenticationException {
         return requestWithAuth(context, "GET", path, null);
@@ -48,7 +47,7 @@ public class ServerRequest implements IServerRequest {
         return post(context, path, message);
     }
     public static <T> T post(Context context, String path, Class<T> classOfT) throws IOException, AuthenticationException, JsonSyntaxException {
-        String response = post(context, path, (String)null);
+        String response = post(context, path, (String) null);
         return gson().fromJson(response, classOfT);
     }
     public static <T, U> U post(Context context, String path, T content, Class<U> classOfU) throws IOException, AuthenticationException, JsonSyntaxException {
@@ -62,18 +61,31 @@ public class ServerRequest implements IServerRequest {
 
     private static String requestWithAuth(Context context, String method, String path, String content) throws IOException, AuthenticationException {
         String authToken = null;
-
         if (context != null) {
-            ITokenCache googleToken = new TokenCache(context, TokenCache.GOOGLE_PREFFILE);
-            CachedToken cachedToken = googleToken.get();
-            if (cachedToken == null) {
-                Log.e("geofence", "No cached token available");
-            }
-            authToken = cachedToken.getToken();
+            authToken = getAuthenticationToken(context);
         }
 
         ServerRequest serverRequest = new ServerRequest(APPKEY, authToken);
         return serverRequest.request(method, ROOTPATH + path, content);
+    }
+
+    public static HttpURLConnection setupConnectionWithAuth(Context context, String method, String path, String content) throws IOException, AuthenticationException {
+        String authToken = null;
+        if (context != null) {
+            authToken = getAuthenticationToken(context);
+        }
+
+        ServerRequest serverRequest = new ServerRequest(APPKEY, authToken);
+        return serverRequest.setupConnection(method, ROOTPATH + path, content);
+    }
+
+    private static String getAuthenticationToken(Context context) {
+        ITokenCache googleToken = new TokenCache(context, TokenCache.GOOGLE_PREFFILE);
+        CachedToken cachedToken = googleToken.get();
+        if (cachedToken == null) {
+            Log.e("geofence", "No cached token available");
+        }
+        return cachedToken.getToken();
     }
 
     private static Gson gson() {
@@ -103,10 +115,35 @@ public class ServerRequest implements IServerRequest {
     }
 
     public String request(String method, String address, String content) throws IOException, AuthenticationException {
+
+        HttpURLConnection urlConnection = setupConnection(method, address, content);
+        try {
+            InputStream inputStream = urlConnection.getInputStream();
+
+
+            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
+            StringBuilder stringBuilder = new StringBuilder();
+            String line;
+            while ((line = bufferedReader.readLine()) != null) {
+                stringBuilder.append(line).append("\n");
+            }
+            bufferedReader.close();
+            return stringBuilder.toString();
+        }
+        finally {
+            urlConnection.disconnect();
+        }
+    }
+
+    public HttpURLConnection setupConnection(String method, String address, String content) throws IOException, AuthenticationException {
         URL url = new URL(address);
         HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
-        urlConnection.setRequestMethod(method);
-        urlConnection.setRequestProperty("X-ZUMO-APPLICATION", mAppKey);
+        if (method.compareTo("GET") != 0) {
+            urlConnection.setRequestMethod(method);
+        }
+        if (mAppKey != null) {
+            urlConnection.setRequestProperty("X-ZUMO-APPLICATION", mAppKey);
+        }
 
         if (mAuthenticationToken != null) {
             urlConnection.setRequestProperty("X-ZUMO-AUTH", mAuthenticationToken);
@@ -131,24 +168,14 @@ public class ServerRequest implements IServerRequest {
                 outStream.close();
             }
 
-            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()));
-            StringBuilder stringBuilder = new StringBuilder();
-            String line;
-            while ((line = bufferedReader.readLine()) != null) {
-                stringBuilder.append(line).append("\n");
-            }
-            bufferedReader.close();
-            return stringBuilder.toString();
+            return urlConnection;
         }
         catch(Exception e) {
             int responseCode = urlConnection.getResponseCode();
             if (responseCode == 401) {
                 throw new AuthenticationException(urlConnection.getResponseMessage());
             }
-            throw e;
-        }
-        finally{
-            urlConnection.disconnect();
+            throw new IOException("Server error. Response code: " + Integer.toString(responseCode) + " - " + urlConnection.getResponseMessage(), e);
         }
     }
 
