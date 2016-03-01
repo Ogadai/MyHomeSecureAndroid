@@ -2,6 +2,7 @@ package com.ogadai.ogadai_secure;
 
 
 import android.Manifest;
+import android.app.Activity;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
@@ -31,6 +32,8 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
 
     private static final int FINE_LOCATION_REQUEST = 7784;
 
+    private Activity mActivity;
+
     public SettingsFragment() {
         // Required empty public constructor
     }
@@ -41,6 +44,8 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
 
         // Load the preferences from an XML resource
         addPreferencesFromResource(R.xml.preferences);
+
+        mActivity = getActivity();
     }
 
     @Override
@@ -71,7 +76,7 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
         if (enterExitEnabled) {
             requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, FINE_LOCATION_REQUEST);
         } else {
-            IEnterExitSetup enterExitSetup = new EnterExitSetup(getActivity());
+            IEnterExitSetup enterExitSetup = new EnterExitSetup(mActivity);
             enterExitSetup.remove();
         }
     }
@@ -80,8 +85,8 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         switch (requestCode) {
             case FINE_LOCATION_REQUEST:
-                if (PackageManager.PERMISSION_GRANTED == getActivity().checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)) {
-                    IEnterExitSetup enterExitSetup = new EnterExitSetup(getActivity());
+                if (PackageManager.PERMISSION_GRANTED == mActivity.checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)) {
+                    IEnterExitSetup enterExitSetup = new EnterExitSetup(mActivity);
                     enterExitSetup.setup();
                 } else {
                     SharedPreferences preferences = getPreferenceScreen().getSharedPreferences();
@@ -93,11 +98,11 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
 
     private void setNotificationsEnabled(boolean notificationsEnabled) {
         if (notificationsEnabled) {
-            NotificationsManager.handleNotifications(getActivity(),
+            NotificationsManager.handleNotifications(mActivity,
                     NOTIFICATION_SENDER_ID,
                     HomeNotificationHandler.class);
         } else {
-            NotificationsManager.stopHandlingNotifications(getActivity());
+            NotificationsManager.stopHandlingNotifications(mActivity);
         }
     }
 }

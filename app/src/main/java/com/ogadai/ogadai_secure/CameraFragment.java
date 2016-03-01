@@ -2,49 +2,36 @@ package com.ogadai.ogadai_secure;
 
 
 import android.app.Activity;
-import android.content.Context;
+import android.app.Fragment;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.os.AsyncTask;
 import android.os.Bundle;
-import android.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.webkit.WebView;
 import android.widget.ImageView;
 
-import com.ogadai.ogadai_secure.awaystatus.AwayStatusUpdate;
-import com.ogadai.ogadai_secure.awaystatus.IAwayStatusUpdate;
-
-import org.glassfish.tyrus.client.auth.AuthenticationException;
-
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
-import java.net.URL;
 
 
 /**
  * A simple {@link Fragment} subclass.
  */
-public class CameraFragment extends Fragment {
+public class CameraFragment extends MainFragment {
 
     private ImageView mImageView;
+    private boolean mInitialising = false;
+
+    private static Bitmap mLastImage = null;
 
     public CameraFragment() {
         // Required empty public constructor
     }
 
-    private IMainActivity getMainActivity() {
-        return (IMainActivity)getActivity();
-    }
-
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        super.initialise();
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_camera, container, false);
 
@@ -57,6 +44,13 @@ public class CameraFragment extends Fragment {
     @Override
     public void onStart() {
         super.onStart();
+
+        if (mLastImage != null) {
+            mImageView.setImageBitmap(mLastImage);
+        } else {
+            showProgressBar();
+            mInitialising = true;
+        }
         startVideoTask();
 
         System.out.println("Started camera fragment");
@@ -66,6 +60,11 @@ public class CameraFragment extends Fragment {
     public void onStop() {
         super.onStop();
         stopVideoTask();
+
+        if (mInitialising) {
+            hideProgressBar();
+            mInitialising = false;
+        }
 
         System.out.println("Stopped camera fragment");
     }
@@ -86,62 +85,62 @@ public class CameraFragment extends Fragment {
 //        mWebView.loadUrl(imageUrl);
 //    }
 
-    private final StreamingStatus mStatus = new StreamingStatus();
+    private StreamingStatus mStatus = null;
 
     private void startVideoTask() {
-        AsyncTask<Void, Void, Void> task = new AsyncTask<Void, Void, Void>() {
+        stopVideoTask();
+        mStatus = new StreamingStatus();
+
+        Thread worker = new Thread(new Runnable() {
             @Override
-            protected Void doInBackground(Void... params) {
+            public void run() {
                 try {
                     startVideo();
                 } catch(Exception e) {
                     System.out.println("Error streaming camera snapshots - " + e.getMessage());
-                    getMainActivity().createAndShowDialogFromTask(e, "Error streaming camera snapshots");
+                    createAndShowDialogFromTask(e, "Error streaming camera snapshots");
                 }
-                return null;
             }
-        };
-        task.execute();
+        });
+        worker.start();
     }
     private void stopVideoTask() {
-        mStatus.setStreaming(false);
-    }
-
-    private void startVideo() {
-        if (mStatus.getStreaming()) return;
-        mStatus.setStreaming(true);
-
-        int index = 1;
-        while(mStatus.getStreaming()) {
-
-            HttpURLConnection urlConnection = null;
-            try {
-                String path = "camerasnapshot?node=garage&i=" + Integer.toString(index);
-                urlConnection = ServerRequest.setupConnectionWithAuth(getActivity(), "GET", path, null);
-                Bitmap bmp = BitmapFactory.decodeStream(urlConnection.getInputStream());
-
-                setImageBitmap(bmp);
-                index++;
-            } catch(Exception e) {
-                System.out.println("Error downloading snapshot - " + e.getMessage());
-                getMainActivity().createAndShowDialogFromTask(e, "Error downloading snapshot");
-                mStatus.setStreaming(false);
-            } finally {
-                if (urlConnection != null) urlConnection.disconnect();
-            }
+        if (mStatus != null) {
+            mStatus.setStreaming(false);
+            mStatus = null;
         }
     }
 
-    private void setImageBitmap(final Bitmap bmp)
-    {
-        Activity activity = getActivity();
-        if (mStatus.getStreaming() && activity != null) {
-            activity.runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    mImageView.setImageBitmap(bmp);
+    private void startVideo() {
+        final StreamingStatus status = mStatus;
+        if (status.getStreaming()) return;
+        status.setStreaming(true);
+
+        while(status.getStreaming()) {
+
+            HttpURLConnection urlConnection = null;
+            try {
+                urlConnection = ServerRequest.setupConnectionWithAuth(getActivity(), "GET", "camerasnapshot?node=garage", null);
+                mLastImage = BitmapFactory.decodeStream(urlConnection.getInputStream());
+
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        mImageView.setImageBitmap(mLastImage);
+                    }
+                });
+            } catch(Exception e) {
+                System.out.println("Error downloading snapshot - " + e.getMessage());
+                createAndShowDialogFromTask(e, "Error downloading snapshot");
+                status.setStreaming(false);
+            } finally {
+                if (urlConnection != null) urlConnection.disconnect();
+
+                if (mInitialising) {
+                    hideProgressBar();
+                    mInitialising = false;
                 }
-            });
+            }
         }
     }
 

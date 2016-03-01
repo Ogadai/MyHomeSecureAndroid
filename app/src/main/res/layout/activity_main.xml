@@ -6,7 +6,8 @@
     android:layout_height="match_parent"
     tools:context="com.ogadai.ogadai_secure.MainActivity">
 
-    <RelativeLayout
+    <com.ogadai.ogadai_secure.MainContent
+        android:id="@+id/main_layout"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
@@ -22,7 +23,7 @@
             android:layout_centerInParent="true"
             android:layout_width="100dp"
             android:layout_height="100dp" />
-    </RelativeLayout>
+    </com.ogadai.ogadai_secure.MainContent>
 
     <!-- The drawer is given a fixed width in dp and extends the full height of
          the container. -->

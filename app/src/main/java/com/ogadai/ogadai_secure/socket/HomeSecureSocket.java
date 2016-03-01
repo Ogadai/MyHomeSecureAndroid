@@ -11,6 +11,8 @@ import java.net.URI;
  */
 public class HomeSecureSocket implements IHomeSecureSocket {
     private IHomeSecureSocketClient mClient;
+
+    private AsyncTask<String, Void, Void> mTask;
     private WebsocketClientEndpoint mClientEndPoint;
 
     public HomeSecureSocket(IHomeSecureSocketClient client) {
@@ -20,19 +22,32 @@ public class HomeSecureSocket implements IHomeSecureSocket {
     @Override
     public void Connect(String token) {
         System.out.println("connect home secure socket");
-        connectWebSocketFromTask(token);
+        if (mClientEndPoint == null) {
+            connectWebSocketFromTask(token);
+        }
     }
 
     @Override
     public void Disconnect() {
         System.out.println("disconnect home secure socket");
-        disconnectWebSocketFromTask();
+        if (mClientEndPoint != null) {
+            disconnectWebSocketFromTask();
+        }
+    }
+
+    private void clearTask() {
+        if (mTask != null) {
+            mTask.cancel(true);
+            mTask = null;
+        }
     }
 
     private void connectWebSocketFromTask(String token) {
-        AsyncTask<String, Void, String> task = new AsyncTask<String, Void, String>() {
-            protected String doInBackground(String... urls) {
+        clearTask();
+        mTask = new AsyncTask<String, Void, Void>() {
+            protected Void doInBackground(String... urls) {
                 connectWebSocket(urls[0]);
+                mTask = null;
                 return null;
             }
 
@@ -40,7 +55,7 @@ public class HomeSecureSocket implements IHomeSecureSocket {
 
             }
         };
-        task.execute(token);
+        mTask.execute(token);
     }
     private void connectWebSocket(String token)
     {
@@ -76,8 +91,10 @@ public class HomeSecureSocket implements IHomeSecureSocket {
 
     private void disconnectWebSocketFromTask()
     {
-        AsyncTask<String, Void, String> task = new AsyncTask<String, Void, String>() {
-            protected String doInBackground(String... urls) {
+        clearTask();
+        mTask = new AsyncTask<String, Void, Void>() {
+            protected Void doInBackground(String... urls) {
+                mTask = null;
                 disconnectWebSocket();
                 return null;
             }
@@ -86,7 +103,7 @@ public class HomeSecureSocket implements IHomeSecureSocket {
 
             }
         };
-        task.execute();
+        mTask.execute();
     }
     private void disconnectWebSocket()
     {

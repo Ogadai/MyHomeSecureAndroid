@@ -22,20 +22,17 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 
-public class HistoryFragment extends Fragment {
+public class HistoryFragment extends MainFragment {
 
     private HistoryRecyclerViewAdapter mHistoryAdapter;
     private List<HistoryItem> mHistoryList = new ArrayList<HistoryItem>();
+    private AsyncTask<String, Void, Void> mTask = null;
 
     /**
      * Mandatory empty constructor for the fragment manager to instantiate the
      * fragment (e.g. upon screen orientation changes).
      */
     public HistoryFragment() {
-    }
-
-    private IMainActivity getMainActivity() {
-        return (IMainActivity)getActivity();
     }
 
     @Override
@@ -46,6 +43,7 @@ public class HistoryFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        super.initialise();
         View view = inflater.inflate(R.layout.fragment_history_list, container, false);
 
         // Set the adapter
@@ -61,9 +59,10 @@ public class HistoryFragment extends Fragment {
     }
 
     public void connect(){
-        getMainActivity().showProgressBar();
+        showProgressBar();
 
-        AsyncTask<String, Void, Void> task = new AsyncTask<String, Void, Void>() {
+        clearTask();
+        mTask = new AsyncTask<String, Void, Void>() {
             protected Void doInBackground(String... urls) {
                 try {
                     HistoryItem[] items = ServerRequest.get(getActivity(), "log", HistoryItem[].class);
@@ -76,20 +75,21 @@ public class HistoryFragment extends Fragment {
 
                     updateHistoryList(items);
 
+                    mTask = null;
                     return null;
                 }
                 catch(AuthenticationException authEx) {
                     System.out.println("error getting history: " + authEx.toString());
-                    getMainActivity().doAuthenticate(true);
+                    doAuthenticate(true);
                     return null;
                 }
                 catch(Exception e) {
                     System.out.println("error getting JSON: " + e.toString());
-                    getMainActivity().createAndShowDialogFromTask(e, "Error getting log");
+                    createAndShowDialogFromTask(e, "Error getting log");
                     return null;
                 }
                 finally {
-                    getMainActivity().hideProgressBar();
+                    hideProgressBar();
                 }
             }
 
@@ -97,16 +97,22 @@ public class HistoryFragment extends Fragment {
 
             }
         };
-        task.execute();
+        mTask.execute();
+    }
+    private void clearTask() {
+        if (mTask != null) {
+            mTask.cancel(true);
+            mTask = null;
+        }
     }
 
     private void updateHistoryList(final HistoryItem[] items) {
-        getActivity().runOnUiThread(new Runnable() {
+        runOnUiThread(new Runnable() {
 
             @Override
             public void run() {
                 mHistoryList.clear();
-                for(HistoryItem item : items) {
+                for (HistoryItem item : items) {
                     mHistoryList.add(item);
                 }
                 mHistoryAdapter.notifyDataSetChanged();

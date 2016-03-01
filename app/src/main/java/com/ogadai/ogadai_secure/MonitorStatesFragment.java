@@ -1,5 +1,6 @@
 package com.ogadai.ogadai_secure;
 
+import android.app.Activity;
 import android.content.Context;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -26,7 +27,7 @@ import org.glassfish.tyrus.client.auth.AuthenticationException;
 import java.io.IOException;
 import java.util.ArrayList;
 
-public class MonitorStatesFragment extends Fragment implements IHomeSecureSocketClient {
+public class MonitorStatesFragment extends MainFragment implements IHomeSecureSocketClient {
     /**
      * Adapter to sync the state list with the view
      */
@@ -39,18 +40,10 @@ public class MonitorStatesFragment extends Fragment implements IHomeSecureSocket
         // Required empty public constructor
     }
 
-    private IMainActivity getMainActivity() {
-        return (IMainActivity)getActivity();
-    }
-
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-    }
-
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        super.initialise();
         // Inflate the layout for this fragment
         View rootView = inflater.inflate(R.layout.fragment_monitor_states, container, false);
 
@@ -79,10 +72,10 @@ public class MonitorStatesFragment extends Fragment implements IHomeSecureSocket
         ITokenCache tokenCache = new TokenCache(getActivity(), TokenCache.GOOGLE_PREFFILE);
         CachedToken cachedToken = tokenCache.get();
         if (cachedToken == null) {
-            getMainActivity().doAuthenticate(true);
+            doAuthenticate(true);
             return;
         }
-        getMainActivity().showProgressBar();
+        showProgressBar();
 
         if (mSocket != null) {
             mSocket.Disconnect();
@@ -90,24 +83,6 @@ public class MonitorStatesFragment extends Fragment implements IHomeSecureSocket
             mSocket = new HomeSecureSocket(this);
         }
         mSocket.Connect(cachedToken.getToken());
-    }
-
-    @Override
-    public void onAttach(Context context) {
-        super.onAttach(context);
-    }
-
-    @Override
-    public void onDetach() {
-        super.onDetach();
-    }
-
-    @Override
-    public void onStop() {
-        super.onStop();
-        mSocket.Disconnect();
-
-        System.out.println("Stopped monitor states fragment");
     }
 
     @Override
@@ -119,10 +94,17 @@ public class MonitorStatesFragment extends Fragment implements IHomeSecureSocket
     }
 
     @Override
+    public void onStop() {
+        super.onStop();
+        mSocket.Disconnect();
+
+        System.out.println("Stopped monitor states fragment");
+    }
+
+    @Override
     public void connected() {
         System.out.println("Connected to server");
-        IMainActivity activity = getMainActivity();
-        if (activity != null) activity.hideProgressBar();
+        hideProgressBar();
     }
 
     @Override
@@ -131,14 +113,14 @@ public class MonitorStatesFragment extends Fragment implements IHomeSecureSocket
         System.out.println("Error connecting to server - " + ex.getMessage());
 
         if (ex instanceof AuthenticationException && ((AuthenticationException) ex).getHttpStatusCode() == 401) {
-            getActivity().runOnUiThread(new Runnable() {
+            runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    getMainActivity().doAuthenticate(true);
+                    doAuthenticate(true);
                 }
             });
         } else {
-            getMainActivity().createAndShowDialogFromTask(ex, "Connection error");
+            createAndShowDialogFromTask(ex, "Connection error");
         }
     }
 
@@ -146,7 +128,7 @@ public class MonitorStatesFragment extends Fragment implements IHomeSecureSocket
     public void disconnected(boolean error) {
         System.out.println("Disconnected from server - " + (error ? "error" : "no error"));
         if (error) {
-            getMainActivity().createAndShowDialogFromTask("Disconnected from server", "Disconnected");
+            createAndShowDialogFromTask("Disconnected from server", "Disconnected");
         }
     }
 
@@ -172,7 +154,7 @@ public class MonitorStatesFragment extends Fragment implements IHomeSecureSocket
     public void showError(Exception e, String error)
     {
         System.out.println(error + " - " + e.getMessage());
-        getMainActivity().createAndShowDialogFromTask(e, error);
+        createAndShowDialogFromTask(e, error);
     }
 
     @Override
@@ -183,7 +165,7 @@ public class MonitorStatesFragment extends Fragment implements IHomeSecureSocket
         try {
             statesMessage = UpdateStatesMessage.FromJSON(message);
 
-            getActivity().runOnUiThread(new Runnable() {
+            runOnUiThread(new Runnable() {
 
                 @Override
                 public void run() {
@@ -204,7 +186,7 @@ public class MonitorStatesFragment extends Fragment implements IHomeSecureSocket
             });
         } catch (IOException e) {
             e.printStackTrace();
-            getMainActivity().createAndShowDialogFromTask(e, "Error showing states");
+            createAndShowDialogFromTask(e, "Error showing states");
         }
     }
 

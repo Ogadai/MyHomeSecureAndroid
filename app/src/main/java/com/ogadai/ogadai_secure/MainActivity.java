@@ -5,8 +5,10 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Fragment;
 import android.app.FragmentManager;
+import android.content.pm.ActivityInfo;
 import android.os.Bundle;
 import android.support.v4.widget.DrawerLayout;
+import android.view.View;
 import android.widget.ProgressBar;
 
 import com.google.common.util.concurrent.FutureCallback;
@@ -37,6 +39,8 @@ public class MainActivity extends Activity
     public static MobileServiceClient getClient() {
         return mClient;
     }
+
+    private MainContent mMainContent;
 
     /**
      * Fragment managing the behaviors, interactions and presentation of the navigation drawer.
@@ -69,6 +73,9 @@ public class MainActivity extends Activity
         mNavigationDrawerFragment.setUp(
                 R.id.navigation_drawer,
                 (DrawerLayout) findViewById(R.id.drawer_layout));
+
+        mMainContent = (MainContent)findViewById(R.id.main_layout);
+        mMainContent.init(getActionBar());
 
         doAuthenticate(false);
 
@@ -150,6 +157,11 @@ public class MainActivity extends Activity
                 .replace(R.id.container, newFragment)
                 .commit();
         onSectionAttached(position);
+
+        mMainContent.setFullScreen(position == 2);
+//        setRequestedOrientation(position == 2
+//                ? ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+//                : ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR);
     }
 
     public void onSectionAttached(int number) {
