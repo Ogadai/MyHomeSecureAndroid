@@ -116,12 +116,14 @@ public class CameraFragment extends MainFragment {
         if (status.getStreaming()) return;
         status.setStreaming(true);
 
+        int index = 1;
         while(status.getStreaming()) {
 
             HttpURLConnection urlConnection = null;
             try {
-                urlConnection = ServerRequest.setupConnectionWithAuth(getActivity(), "GET", "camerasnapshot?node=garage", null);
+                urlConnection = ServerRequest.setupConnectionWithAuth(getActivity(), "GET", "camerasnapshot?node=garage&i=" + Integer.toString(index), null);
                 mLastImage = BitmapFactory.decodeStream(urlConnection.getInputStream());
+                index++;
 
                 runOnUiThread(new Runnable() {
                     @Override
