@@ -23,7 +23,6 @@ public class SetHomeActivity extends Activity {
 
         // Creates an explicit intent for an Activity in your app
         Intent resultIntent = new Intent(this, MainActivity.class);
-        resultIntent.putExtra(MainActivity.EXTRA_SETHOME, false);
 
         // The stack builder object will contain an artificial back stack for the
         // started Activity.

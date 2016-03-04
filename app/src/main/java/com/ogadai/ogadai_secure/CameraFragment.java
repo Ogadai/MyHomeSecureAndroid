@@ -12,6 +12,7 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 
 import java.net.HttpURLConnection;
+import java.util.Date;
 
 
 /**
@@ -23,6 +24,13 @@ public class CameraFragment extends MainFragment {
     private boolean mInitialising = false;
 
     private static Bitmap mLastImage = null;
+    private static Date mLastImageDate = null;
+    public static void setLastImage(Bitmap image) {
+        mLastImage = image;
+        mLastImageDate = new Date();
+    }
+    public static Bitmap getLastImage() { return mLastImage; }
+    public static Date getLastImageDate() { return mLastImageDate; }
 
     public CameraFragment() {
         // Required empty public constructor

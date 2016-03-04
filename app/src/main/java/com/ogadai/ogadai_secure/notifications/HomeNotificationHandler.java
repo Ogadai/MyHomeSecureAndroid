@@ -1,6 +1,7 @@
 package com.ogadai.ogadai_secure.notifications;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
 
@@ -16,6 +17,9 @@ import java.io.IOException;
  */
 public class HomeNotificationHandler extends NotificationsHandler {
 
+    private static Runnable mFailCallback;
+    public static void setFailCallback(Runnable callback) { mFailCallback = callback; }
+
     @Override
     public void onRegistered(Context context,  final String gcmRegistrationId) {
         super.onRegistered(context, gcmRegistrationId);
@@ -24,19 +28,23 @@ public class HomeNotificationHandler extends NotificationsHandler {
         new AsyncTask<Void, Void, Void>() {
 
             protected Void doInBackground(Void... params) {
+                boolean successful = false;
                 try {
                     String hubId = getHubId(fContext);
                     if (hubId != null) {
                         String[] tags = new String[]{hubId};
                         System.out.println("registering notifications handler");
                         MainActivity.getClient().getPush().register(gcmRegistrationId, tags);
+                        successful = true;
                     }
-                    return null;
                 }
                 catch(Exception e) {
                     // handle error
                     System.out.println("Error registering notifications handler - " + e.getMessage());
                 }
+
+                if (!successful && mFailCallback != null) mFailCallback.run();
+
                 return null;
             }
         }.execute();
@@ -52,11 +60,11 @@ public class HomeNotificationHandler extends NotificationsHandler {
                 try {
                     System.out.println("unregistering notifications handler");
                     MainActivity.getClient().getPush().unregisterAll(gcmRegistrationId);
-                    return null;
                 }
                 catch(Exception e) {
                     // handle error
                     System.out.println("Error unregistering notifications handler - " + e.getMessage());
+                    if (mFailCallback != null) mFailCallback.run();
                 }
                 return null;
             }

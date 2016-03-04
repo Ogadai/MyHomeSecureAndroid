@@ -5,6 +5,7 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Fragment;
 import android.app.FragmentManager;
+import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.os.Bundle;
 import android.support.v4.widget.DrawerLayout;
@@ -29,7 +30,7 @@ import java.net.MalformedURLException;
 
 public class MainActivity extends Activity
         implements NavigationDrawerFragment.NavigationDrawerCallbacks, IMainActivity {
-    public static final String EXTRA_SETHOME = "com.ogadai.ogadai_secure.setHome";
+    public static final String EXTRA_SHOWFRAGMENT = "com.ogadai.ogadai_secure.showCamera";
 
     /**
      * Mobile Service Client reference
@@ -69,10 +70,18 @@ public class MainActivity extends Activity
         mProgressBar = (ProgressBar) findViewById(R.id.loadingProgressBar);
         mProgressBar.setVisibility(ProgressBar.GONE);
 
+        int currentPosition = -1;
+        Intent intent = getIntent();
+        String targetFragment = intent.getStringExtra(EXTRA_SHOWFRAGMENT);
+        if (targetFragment != null && targetFragment.compareTo("camera") == 0) {
+            currentPosition = 2;
+        }
+
         // Set up the drawer.
         mNavigationDrawerFragment.setUp(
                 R.id.navigation_drawer,
-                (DrawerLayout) findViewById(R.id.drawer_layout));
+                (DrawerLayout) findViewById(R.id.drawer_layout),
+                currentPosition);
 
         mMainContent = (MainContent)findViewById(R.id.main_layout);
         mMainContent.init(getActionBar());

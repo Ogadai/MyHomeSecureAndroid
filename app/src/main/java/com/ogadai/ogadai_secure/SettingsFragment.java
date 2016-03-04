@@ -32,7 +32,7 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
 
     private static final int FINE_LOCATION_REQUEST = 7784;
 
-    private Activity mActivity;
+    private MainActivity mActivity;
 
     public SettingsFragment() {
         // Required empty public constructor
@@ -45,7 +45,7 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
         // Load the preferences from an XML resource
         addPreferencesFromResource(R.xml.preferences);
 
-        mActivity = getActivity();
+        mActivity = (MainActivity)getActivity();
     }
 
     @Override
@@ -83,20 +83,40 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
 
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        Runnable onFail = new Runnable() {
+            @Override
+            public void run() {
+                SharedPreferences preferences = getPreferenceScreen().getSharedPreferences();
+                preferences.edit().putBoolean(KEY_PREF_ENTEREXIT, false).commit();
+
+                mActivity.createAndShowDialogFromTask("Failed to setup location tracking", "Location");
+            }
+        };
+
         switch (requestCode) {
             case FINE_LOCATION_REQUEST:
                 if (PackageManager.PERMISSION_GRANTED == mActivity.checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)) {
                     IEnterExitSetup enterExitSetup = new EnterExitSetup(mActivity);
-                    enterExitSetup.setup();
+                    enterExitSetup.setup(onFail);
                 } else {
-                    SharedPreferences preferences = getPreferenceScreen().getSharedPreferences();
-                    preferences.edit().remove(KEY_PREF_ENTEREXIT).commit();
+                    onFail.run();
                 }
                 break;
         }
     }
 
-    private void setNotificationsEnabled(boolean notificationsEnabled) {
+    private void setNotificationsEnabled(final boolean notificationsEnabled) {
+        HomeNotificationHandler.setFailCallback(new Runnable() {
+            @Override
+            public void run() {
+                SharedPreferences preferences = getPreferenceScreen().getSharedPreferences();
+                preferences.edit().putBoolean(KEY_PREF_NOTIFICATIONS, !notificationsEnabled).commit();
+
+                String message = "Failed to " + (notificationsEnabled ? "register for" : "unregister from") + " notifications";
+                mActivity.createAndShowDialogFromTask(message, "Notifications");
+            }
+        });
+
         if (notificationsEnabled) {
             NotificationsManager.handleNotifications(mActivity,
                     NOTIFICATION_SENDER_ID,

@@ -25,9 +25,9 @@ public class EnterExitSetup implements IEnterExitSetup {
     }
 
     @Override
-    public void setup() {
-        requestNewTokenOnThread();
-        getLocationOnThread();
+    public void setup(Runnable failCallback) {
+        requestNewTokenOnThread(failCallback);
+        getLocationOnThread(failCallback);
     }
 
     @Override
@@ -35,10 +35,10 @@ public class EnterExitSetup implements IEnterExitSetup {
         mGeofenceSetup.remove();
     }
 
-    private void requestNewTokenOnThread() {
+    private void requestNewTokenOnThread(final Runnable failCallback) {
         AsyncTask<String, Void, Void> task = new AsyncTask<String, Void, Void>() {
             protected Void doInBackground(String... urls) {
-                requestNewToken();
+                requestNewToken(failCallback);
                 return null;
             }
 
@@ -49,7 +49,7 @@ public class EnterExitSetup implements IEnterExitSetup {
         task.execute();
     }
 
-    private void requestNewToken() {
+    private void requestNewToken(Runnable failCallback) {
         System.out.println("requesting new token");
 
         try {
@@ -61,16 +61,17 @@ public class EnterExitSetup implements IEnterExitSetup {
             System.out.println("Updated token for user - " + tokenMessage.getUserName());
         } catch (Exception e) {
             System.out.println("Error posting away status - " + e.toString());
+            failCallback.run();
 
             ShowNotification test = new ShowNotification(mContext);
             test.show("Error requesting Token", e.toString());
         }
     }
 
-    private void getLocationOnThread() {
+    private void getLocationOnThread(final Runnable failCallback) {
         AsyncTask<String, Void, Void> task = new AsyncTask<String, Void, Void>() {
             protected Void doInBackground(String... urls) {
-                getLocation();
+                getLocation(failCallback);
                 return null;
             }
 
@@ -81,7 +82,7 @@ public class EnterExitSetup implements IEnterExitSetup {
         task.execute();
     }
 
-    private void getLocation() {
+    private void getLocation(Runnable failCallback) {
         try {
             HubLocationMessage location = ServerRequest.get(mContext, "hublocation", HubLocationMessage.class);
 
@@ -89,6 +90,7 @@ public class EnterExitSetup implements IEnterExitSetup {
             mGeofenceSetup.setup();
         } catch (Exception e) {
             System.out.println("Error getting hub location - " + e.toString());
+            failCallback.run();
 
             ShowNotification test = new ShowNotification(mContext);
             test.show("Error getting hub location", e.toString());
