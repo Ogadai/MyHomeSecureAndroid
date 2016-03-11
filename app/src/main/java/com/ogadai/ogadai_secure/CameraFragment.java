@@ -11,6 +11,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 
+import org.glassfish.tyrus.client.auth.AuthenticationException;
+
 import java.net.HttpURLConnection;
 import java.util.Date;
 
@@ -139,6 +141,10 @@ public class CameraFragment extends MainFragment {
                         mImageView.setImageBitmap(mLastImage);
                     }
                 });
+            } catch(AuthenticationException authEx) {
+                System.out.println("Error downloading snapshot: " + authEx.toString());
+                doAuthenticate(true);
+                status.setStreaming(false);
             } catch(Exception e) {
                 System.out.println("Error downloading snapshot - " + e.getMessage());
                 createAndShowDialogFromTask(e, "Error downloading snapshot");

@@ -2,22 +2,14 @@ package com.ogadai.ogadai_secure;
 
 
 import android.Manifest;
-import android.app.Activity;
+import android.app.Fragment;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.app.Fragment;
-import android.preference.Preference;
 import android.preference.PreferenceFragment;
-import android.preference.PreferenceManager;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.TextView;
 
 import com.microsoft.windowsazure.notifications.NotificationsManager;
 import com.ogadai.ogadai_secure.awaystatus.EnterExitSetup;
-import com.ogadai.ogadai_secure.awaystatus.GeofenceSetup;
 import com.ogadai.ogadai_secure.awaystatus.IEnterExitSetup;
 import com.ogadai.ogadai_secure.notifications.HomeNotificationHandler;
 

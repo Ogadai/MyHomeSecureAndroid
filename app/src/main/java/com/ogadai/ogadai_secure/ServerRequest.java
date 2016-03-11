@@ -26,7 +26,8 @@ import java.nio.charset.StandardCharsets;
  */
 public class ServerRequest implements IServerRequest {
     public static String APPKEY = "RhCLppCOuzkwkzZcDDLGcZQTOTwUBj90";
-    public static String ROOTPATH = "https://ogadai-secure.azure-mobile.net/api/";
+    public static String ROOTPATH = "https://ogadai-secure.azure-mobile.net/";
+    public static String ROOTAPIPATH = ROOTPATH + "api/";
 
     public static String get(Context context, String path) throws IOException, AuthenticationException {
         return requestWithAuth(context, "GET", path, null);
@@ -66,7 +67,7 @@ public class ServerRequest implements IServerRequest {
         }
 
         ServerRequest serverRequest = new ServerRequest(APPKEY, authToken);
-        return serverRequest.request(method, ROOTPATH + path, content);
+        return serverRequest.request(method, ROOTAPIPATH + path, content);
     }
 
     public static HttpURLConnection setupConnectionWithAuth(Context context, String method, String path, String content) throws IOException, AuthenticationException {
@@ -76,7 +77,7 @@ public class ServerRequest implements IServerRequest {
         }
 
         ServerRequest serverRequest = new ServerRequest(APPKEY, authToken);
-        return serverRequest.setupConnection(method, ROOTPATH + path, content);
+        return serverRequest.setupConnection(method, ROOTAPIPATH + path, content);
     }
 
     private static String getAuthenticationToken(Context context) {

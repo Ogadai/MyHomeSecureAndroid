@@ -111,6 +111,7 @@ public class MonitorStatesFragment extends MainFragment implements IHomeSecureSo
     public void connectionError(Exception ex)
     {
         System.out.println("Error connecting to server - " + ex.getMessage());
+        hideProgressBar();
 
         if (ex instanceof AuthenticationException && ((AuthenticationException) ex).getHttpStatusCode() == 401) {
             runOnUiThread(new Runnable() {

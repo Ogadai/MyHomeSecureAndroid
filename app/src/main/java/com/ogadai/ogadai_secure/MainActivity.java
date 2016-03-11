@@ -106,8 +106,7 @@ public class MainActivity extends Activity
 
             // Mobile Service URL and key
             mClient = new MobileServiceClient(
-                    "https://ogadai-secure.azure-mobile.net/",
-                    "RhCLppCOuzkwkzZcDDLGcZQTOTwUBj90",
+                    ServerRequest.ROOTPATH, ServerRequest.APPKEY,
                     this).withFilter(new ProgressFilter());
             new GoogleAuthenticator(this).authenticate(mClient, update, new IAuthenticateClient() {
                 @Override
