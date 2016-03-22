@@ -71,7 +71,7 @@ public class StateNotificationHandler {
                 try {
                     // Get a new snapshot image
                     System.out.println("getting snapshot for notification");
-                    HttpURLConnection urlConnection = ServerRequest.setupConnectionWithAuth(mContext, "GET", "camerasnapshot?node=garage&i=" + Integer.toString(index), null);
+                    HttpURLConnection urlConnection = ServerRequest.setupConnectionWithAuth(mContext, "GET", "camerasnapshot?node=garage&thumbnail=true&i=" + Integer.toString(index), null);
                     Bitmap snapshot = BitmapFactory.decodeStream(urlConnection.getInputStream());
 
                     CameraFragment.setLastImage(snapshot);
