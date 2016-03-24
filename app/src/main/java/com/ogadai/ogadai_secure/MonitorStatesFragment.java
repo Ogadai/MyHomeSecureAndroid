@@ -1,11 +1,9 @@
 package com.ogadai.ogadai_secure;
 
-import android.app.Activity;
-import android.content.Context;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.app.Fragment;
+import android.os.Message;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,6 +16,8 @@ import com.ogadai.ogadai_secure.auth.TokenCache;
 import com.ogadai.ogadai_secure.awaystatus.AwayStatusUpdate;
 import com.ogadai.ogadai_secure.awaystatus.IAwayStatusUpdate;
 import com.ogadai.ogadai_secure.awaystatus.ManageAwayStatus;
+import com.ogadai.ogadai_secure.messages.MessageBase;
+import com.ogadai.ogadai_secure.messages.UpdateStatesMessage;
 import com.ogadai.ogadai_secure.socket.HomeSecureSocket;
 import com.ogadai.ogadai_secure.socket.IHomeSecureSocket;
 import com.ogadai.ogadai_secure.socket.IHomeSecureSocketClient;
@@ -159,36 +159,43 @@ public class MonitorStatesFragment extends MainFragment implements IHomeSecureSo
     }
 
     @Override
-    public void messageReceived(String message) {
+    public void messageReceived(final String message) {
         System.out.println(message);
 
-        final UpdateStatesMessage statesMessage;
         try {
-            statesMessage = UpdateStatesMessage.FromJSON(message);
+            MessageBase baseMessage = MessageBase.FromJSON(message);
+            if (baseMessage.getMethod().compareTo("ChangeStates") == 0) {
+                final UpdateStatesMessage statesMessage = UpdateStatesMessage.FromJSON(message);
 
-            runOnUiThread(new Runnable() {
+                runOnUiThread(new Runnable() {
 
-                @Override
-                public void run() {
-                    for (StateItem state : statesMessage.getStates()) {
-
-                        boolean found = false;
-                        for (StateItem existing : mStates) {
-                            if (existing.getName().equals(state.getName())) {
-                                existing.setActive(state.getActive());
-                                found = true;
-                            }
-                        }
-
-                        if (!found) mStates.add(state);
+                    @Override
+                    public void run() {
+                        updatedStatesMessage(statesMessage);
                     }
-                    mAdapter.notifyDataSetChanged();
-                }
-            });
+                });
+            }
         } catch (IOException e) {
             e.printStackTrace();
             createAndShowDialogFromTask(e, "Error showing states");
         }
+    }
+
+    private void updatedStatesMessage(final UpdateStatesMessage statesMessage)
+    {
+        for (StateItem state : statesMessage.getStates()) {
+
+            boolean found = false;
+            for (StateItem existing : mStates) {
+                if (existing.getName().equals(state.getName())) {
+                    existing.setActive(state.getActive());
+                    found = true;
+                }
+            }
+
+            if (!found) mStates.add(state);
+        }
+        mAdapter.notifyDataSetChanged();
     }
 
     /**
