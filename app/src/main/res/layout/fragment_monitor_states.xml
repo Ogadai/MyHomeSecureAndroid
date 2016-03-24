@@ -4,12 +4,37 @@
     android:layout_height="match_parent"
     tools:context="com.ogadai.ogadai_secure.MonitorStatesFragment">
 
-    <ListView
-        android:id="@+id/listViewMonitorStates"
-        android:layout_width="match_parent"
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:orientation="vertical">
+
+        <Switch
+            android:id="@+id/switchAway"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="@dimen/text_margin"
+            android:text="@string/awaycheckbox_text"
+            android:padding="6dip" />
+
+        <ListView
+            android:id="@+id/listViewMonitorStates"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            tools:listitem="@layout/row_list_monitor_states"
+            android:padding="6dip" >
+        </ListView>
+    </LinearLayout>
+
+    <TextView
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        tools:listitem="@layout/row_list_monitor_states"
-        android:padding="6dip" >
-    </ListView>
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:text="@string/hubdisconnected_text"
+        android:id="@+id/hubConnectedStatus"
+        android:layout_gravity="bottom|right"
+        android:padding="12dip"
+        />
+
 
 </FrameLayout>

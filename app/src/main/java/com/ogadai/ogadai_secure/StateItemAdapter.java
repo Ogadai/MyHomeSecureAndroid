@@ -8,6 +8,7 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.CheckBox;
 import android.widget.Switch;
+import android.widget.ToggleButton;
 
 import java.util.List;
 
@@ -55,21 +56,22 @@ public class StateItemAdapter extends ArrayAdapter<StateItem> {
         final Switch theSwitch = (Switch) row.findViewById(R.id.switchStateActive);
         theSwitch.setText(currentItem.getName());
         theSwitch.setChecked(currentItem.getActive());
-        theSwitch.setEnabled(isAwayState(currentItem));
-
-        theSwitch.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View arg0) {
-                if (isAwayState(currentItem)) {
-                    if (mStateClickListener != null) {
-                        currentItem.setActive(theSwitch.isChecked());
-                        mStateClickListener.StateClicked(currentItem);
-                    }
-                } else {
-                    theSwitch.setChecked(currentItem.getActive());
-                }
-            }
-        });
+        theSwitch.setEnabled(false);
+//        theSwitch.setEnabled(isAwayState(currentItem));
+//
+//        theSwitch.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View arg0) {
+//                if (isAwayState(currentItem)) {
+//                    if (mStateClickListener != null) {
+//                        currentItem.setActive(theSwitch.isChecked());
+//                        mStateClickListener.StateClicked(currentItem);
+//                    }
+//                } else {
+//                    theSwitch.setChecked(currentItem.getActive());
+//                }
+//            }
+//        });
 
         return row;
     }
