@@ -95,6 +95,7 @@ public class MonitorStatesFragment extends MainFragment implements IHomeSecureSo
         });
 
         mStateView = (StateView) rootView.findViewById(R.id.stateDiagram);
+        mStateView.setStates(mStates);
 
         mHubDisconnected = (TextView) rootView.findViewById(R.id.hubConnectedStatus);
 
@@ -208,6 +209,7 @@ public class MonitorStatesFragment extends MainFragment implements IHomeSecureSo
 
         try {
             MessageBase baseMessage = MessageBase.FromJSON(message);
+
             if (baseMessage.getMethod().compareTo("ChangeStates") == 0) {
                 final UpdateStatesMessage statesMessage = UpdateStatesMessage.FromJSON(message);
 
@@ -259,8 +261,14 @@ public class MonitorStatesFragment extends MainFragment implements IHomeSecureSo
 
             if (!found) mStates.add(state);
         }
-        mStateView.setStates(mStates);
+
         mAdapter.notifyDataSetChanged();
+
+        try {
+            mStateView.notifyDataSetChanged();
+        } catch(Exception e) {
+            createAndShowDialogFromTask(e, "Error updating state view");
+        }
     }
 
     private void userAwayMessage(UserCheckInOutMessage userCheckInOutMessage) {
@@ -268,6 +276,7 @@ public class MonitorStatesFragment extends MainFragment implements IHomeSecureSo
             mAwaySwitch.setChecked(userCheckInOutMessage.getAway());
         }
     }
+
 
     private void hubConnectionStatusMessage(ConnectionStatusMessage connectionStatusMessage) {
         boolean connected = connectionStatusMessage.getConnected();
