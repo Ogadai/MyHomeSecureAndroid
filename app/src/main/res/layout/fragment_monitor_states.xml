@@ -1,8 +1,15 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context="com.ogadai.ogadai_secure.MonitorStatesFragment">
+
+    <com.ogadai.ogadai_secure.StateView
+        android:id="@+id/stateDiagram"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:padding="12dp" />
 
     <LinearLayout
         android:layout_width="fill_parent"
@@ -11,7 +18,7 @@
 
         <Switch
             android:id="@+id/switchAway"
-            android:layout_width="match_parent"
+            android:layout_width="120dip"
             android:layout_height="wrap_content"
             android:layout_margin="@dimen/text_margin"
             android:text="@string/awaycheckbox_text"
@@ -35,6 +42,5 @@
         android:layout_gravity="bottom|right"
         android:padding="12dip"
         />
-
 
 </FrameLayout>

@@ -1,5 +1,8 @@
 package com.ogadai.ogadai_secure;
 
+import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -29,7 +32,10 @@ import com.ogadai.ogadai_secure.socket.IHomeSecureSocketClient;
 import org.glassfish.tyrus.client.auth.AuthenticationException;
 
 import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 
 public class MonitorStatesFragment extends MainFragment implements IHomeSecureSocketClient {
     /**
@@ -38,10 +44,16 @@ public class MonitorStatesFragment extends MainFragment implements IHomeSecureSo
     private StateItemAdapter mAdapter;
     private ArrayList<StateItem> mStates = new ArrayList<StateItem>();
 
+    private ListView mListViewStates;
+
     private IHomeSecureSocket mSocket;
 
     private Switch mAwaySwitch;
     private TextView mHubDisconnected;
+
+    private StateView mStateView;
+
+    private static ArrayList<StateImage> mStateImages = null;
 
     public MonitorStatesFragment() {
         // Required empty public constructor
@@ -63,14 +75,14 @@ public class MonitorStatesFragment extends MainFragment implements IHomeSecureSo
             }
         });
 
-        ListView listViewStates = (ListView) rootView.findViewById(R.id.listViewMonitorStates);
-        listViewStates.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-
-            }
-        });
-        listViewStates.setAdapter(mAdapter);
+        mListViewStates = (ListView) rootView.findViewById(R.id.listViewMonitorStates);
+//        mListViewStates.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+//            @Override
+//            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+//
+//            }
+//        });
+        mListViewStates.setAdapter(mAdapter);
 
         mAwaySwitch = (Switch) rootView.findViewById(R.id.switchAway);
         mAwaySwitch.setOnClickListener(new View.OnClickListener() {
@@ -81,6 +93,8 @@ public class MonitorStatesFragment extends MainFragment implements IHomeSecureSo
                 ChangedAwayState(action);
             }
         });
+
+        mStateView = (StateView) rootView.findViewById(R.id.stateDiagram);
 
         mHubDisconnected = (TextView) rootView.findViewById(R.id.hubConnectedStatus);
 
@@ -102,6 +116,13 @@ public class MonitorStatesFragment extends MainFragment implements IHomeSecureSo
             mSocket = new HomeSecureSocket(this);
         }
         mSocket.Connect(cachedToken.getToken());
+
+        if (mStateImages == null) {
+            getStatusImageInfo();
+        } else {
+            mStateView.setStateImages(mStateImages);
+            mListViewStates.setVisibility(View.INVISIBLE);
+        }
     }
 
     @Override
@@ -149,6 +170,9 @@ public class MonitorStatesFragment extends MainFragment implements IHomeSecureSo
         if (error) {
             createAndShowDialogFromTask("Disconnected from server", "Disconnected");
         }
+
+        mHubDisconnected.setVisibility(View.VISIBLE);
+        mHubDisconnected.setText("Phone disconnected");
     }
 
     private void ChangedAwayState(StateItem state) {
@@ -235,6 +259,7 @@ public class MonitorStatesFragment extends MainFragment implements IHomeSecureSo
 
             if (!found) mStates.add(state);
         }
+        mStateView.setStates(mStates);
         mAdapter.notifyDataSetChanged();
     }
 
@@ -245,8 +270,89 @@ public class MonitorStatesFragment extends MainFragment implements IHomeSecureSo
     }
 
     private void hubConnectionStatusMessage(ConnectionStatusMessage connectionStatusMessage) {
-        mHubDisconnected.setVisibility(connectionStatusMessage.getConnected() ? View.INVISIBLE : View.VISIBLE);
+        boolean connected = connectionStatusMessage.getConnected();
+        mHubDisconnected.setVisibility(connected ? View.INVISIBLE : View.VISIBLE);
+
+        if (!connected) {
+            mHubDisconnected.setText("Hub disconnected");
+        }
     }
+
+
+    private void getStatusImageInfo() {
+        AsyncTask<Void, Void, Void> task = new AsyncTask<Void, Void, Void>() {
+            @SuppressWarnings("ResourceType")
+            @Override
+            protected Void doInBackground(Void... urls) {
+                try {
+                    StatusImageInfo[] items = ServerRequest.get(getActivity(), "statusimage", StatusImageInfo[].class);
+
+                    Arrays.sort(items, new Comparator<StatusImageInfo>() {
+                        @Override
+                        public int compare(StatusImageInfo lhs, StatusImageInfo rhs) {
+                            return lhs.getZIndex() - rhs.getZIndex();
+                        }
+                    });
+
+                    final ArrayList<StateImage> stateImages = new ArrayList<>();
+                    for(int n = 0; n < items.length; n++) {
+                        StatusImageInfo imageInfo = items[n];
+                        StateImage stateImage = null;
+                        for(int m = 0; m < stateImages.size(); m++) {
+                            StateImage enumItem = stateImages.get(m);
+                            if (enumItem.getState().compareTo(imageInfo.getState()) == 0) {
+                                stateImage = enumItem;
+                            }
+                        }
+                        if (stateImage == null) {
+                            stateImage = new StateImage(imageInfo.getState());
+                            stateImages.add(stateImage);
+                        }
+
+                        Bitmap stateBitmap = downloadBitmap(imageInfo.getFileName());
+                        if (imageInfo.getActive()) {
+                            stateImage.setActiveBitmap(stateBitmap);
+                        } else {
+                            stateImage.setInactiveBitmap(stateBitmap);
+                        }
+                    }
+
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            // Set the images in the view
+                            mStateImages = stateImages;
+                            mStateView.setStateImages(mStateImages);
+
+                            if (mStateImages.size() > 0) {
+                                mListViewStates.setVisibility(View.INVISIBLE);
+                            }
+                        }
+                    });
+                } catch (Exception e) {
+                    showError(e, "Getting state images");
+                }
+                return null;
+            }
+        };
+        task.execute();
+        // StatusImageInfo[]
+    }
+
+    private Bitmap downloadBitmap(String fileName) {
+        HttpURLConnection urlConnection = null;
+        try {
+            urlConnection = ServerRequest.setupConnectionWithAuth(getActivity(), "GET", "statusimage/" + fileName, null);
+            return BitmapFactory.decodeStream(urlConnection.getInputStream());
+        } catch(Exception e) {
+            System.out.println("Error downloading snapshot - " + e.getMessage());
+        } finally {
+            if (urlConnection != null) urlConnection.disconnect();
+        }
+
+        return null;
+    }
+
 
     /**
      * This interface must be implemented by activities that contain this
