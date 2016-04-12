@@ -31,11 +31,20 @@ import com.ogadai.ogadai_secure.socket.IHomeSecureSocketClient;
 
 import org.glassfish.tyrus.client.auth.AuthenticationException;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.Date;
 
 public class MonitorStatesFragment extends MainFragment implements IHomeSecureSocketClient {
     /**
@@ -117,13 +126,6 @@ public class MonitorStatesFragment extends MainFragment implements IHomeSecureSo
             mSocket = new HomeSecureSocket(this);
         }
         mSocket.Connect(cachedToken.getToken());
-
-        if (mStateImages == null) {
-            getStatusImageInfo();
-        } else {
-            mStateView.setStateImages(mStateImages);
-            mListViewStates.setVisibility(View.INVISIBLE);
-        }
     }
 
     @Override
@@ -146,6 +148,18 @@ public class MonitorStatesFragment extends MainFragment implements IHomeSecureSo
     public void connected() {
         System.out.println("Connected to server");
         hideProgressBar();
+
+        if (mStateImages == null) {
+            getStatusImageInfo();
+        } else {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    mStateView.setStateImages(mStateImages);
+                    mListViewStates.setVisibility(View.INVISIBLE);
+                }
+            });
+        }
     }
 
     @Override
@@ -318,7 +332,7 @@ public class MonitorStatesFragment extends MainFragment implements IHomeSecureSo
                             stateImages.add(stateImage);
                         }
 
-                        Bitmap stateBitmap = downloadBitmap(imageInfo.getFileName());
+                        Bitmap stateBitmap = downloadBitmap(imageInfo.getFileName(), imageInfo.getUpdated());
                         if (imageInfo.getActive()) {
                             stateImage.setActiveBitmap(stateBitmap);
                         } else {
@@ -348,11 +362,19 @@ public class MonitorStatesFragment extends MainFragment implements IHomeSecureSo
         // StatusImageInfo[]
     }
 
-    private Bitmap downloadBitmap(String fileName) {
+    private Bitmap downloadBitmap(String fileName, Date updated) {
+        Bitmap cachedBitmap = getCachedBitmap(fileName, updated);
+        if (cachedBitmap != null) {
+            return cachedBitmap;
+        }
+
         HttpURLConnection urlConnection = null;
         try {
             urlConnection = ServerRequest.setupConnectionWithAuth(getActivity(), "GET", "statusimage/" + fileName, null);
-            return BitmapFactory.decodeStream(urlConnection.getInputStream());
+
+            cacheBitmapStream(fileName, urlConnection.getInputStream());
+
+            return getCachedBitmap(fileName, updated);
         } catch(Exception e) {
             System.out.println("Error downloading snapshot - " + e.getMessage());
         } finally {
@@ -362,6 +384,58 @@ public class MonitorStatesFragment extends MainFragment implements IHomeSecureSo
         return null;
     }
 
+    private Bitmap getCachedBitmap(String fileName, Date updated) {
+        try {
+            File bitmapFile = getCacheFile(fileName);
+
+            if (bitmapFile.exists()) {
+                Date lastModified = new Date(bitmapFile.lastModified());
+                if (lastModified.compareTo(updated) > 0) {
+                    return BitmapFactory.decodeStream(new FileInputStream(bitmapFile));
+                }
+            }
+            return null;
+        } catch (FileNotFoundException e) {
+            System.out.println("Error getting cached bitmap - " + e.getMessage());
+            return null;
+        }
+    }
+
+    private void cacheBitmapStream(String fileName, InputStream inStream) {
+        try {
+            File bitmapFile = getCacheFile(fileName);
+            OutputStream outStream = new FileOutputStream(bitmapFile);
+
+            copyStream(inStream, outStream);
+
+            inStream.close();
+            outStream.close();
+        } catch (IOException e) {
+            System.out.println("Error caching bitmap - " + e.getMessage());
+        }
+    }
+
+
+    private File getCacheFile(String fileName) {
+        return new File(getContext().getCacheDir(), fileName + ".png");
+    }
+
+    private void copyStream(InputStream is, OutputStream os)
+    {
+        final int buffer_size=1024;
+        try
+        {
+            byte[] bytes=new byte[buffer_size];
+            for(;;)
+            {
+                int count=is.read(bytes, 0, buffer_size);
+                if(count==-1)
+                    break;
+                os.write(bytes, 0, count);
+            }
+        }
+        catch(Exception ex){}
+    }
 
     /**
      * This interface must be implemented by activities that contain this
