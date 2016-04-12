@@ -5,6 +5,13 @@ import android.util.Log;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParseException;
+import com.google.gson.JsonPrimitive;
+import com.google.gson.JsonSerializationContext;
+import com.google.gson.JsonSerializer;
 import com.google.gson.JsonSyntaxException;
 import com.ogadai.ogadai_secure.auth.CachedToken;
 import com.ogadai.ogadai_secure.auth.ITokenCache;
@@ -17,9 +24,17 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
+import java.net.Proxy;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
+import java.util.TimeZone;
 
 /**
  * Created by alee on 16/02/2016.
@@ -91,7 +106,7 @@ public class ServerRequest implements IServerRequest {
 
     private static Gson gson() {
         return new GsonBuilder()
-                .setDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
+                .registerTypeAdapter(Date.class, new gsonUTCdateAdapter())
                 .create();
     }
 
@@ -180,4 +195,37 @@ public class ServerRequest implements IServerRequest {
         }
     }
 
+    public static class gsonUTCdateAdapter implements JsonSerializer<Date>,JsonDeserializer<Date> {
+
+        private final DateFormat dateFormat1;
+        private final DateFormat dateFormat2;
+
+        public gsonUTCdateAdapter() {
+            dateFormat1 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US);
+            dateFormat1.setTimeZone(TimeZone.getTimeZone("UTC"));
+
+            dateFormat2 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
+            dateFormat2.setTimeZone(TimeZone.getTimeZone("UTC"));
+        }
+
+        @Override
+        public synchronized JsonElement serialize(Date date, Type type, JsonSerializationContext jsonSerializationContext) {
+            return new JsonPrimitive(dateFormat1.format(date));
+        }
+
+        @Override
+        public synchronized Date deserialize(JsonElement jsonElement, Type type, JsonDeserializationContext jsonDeserializationContext) {
+            String dateString = jsonElement.getAsString();
+
+            try {
+                return dateFormat1.parse(dateString);
+            } catch (ParseException fail1) {
+                try {
+                    return dateFormat2.parse(dateString);
+                } catch (ParseException e) {
+                    throw new JsonParseException(e);
+                }
+            }
+        }
+    }
 }
