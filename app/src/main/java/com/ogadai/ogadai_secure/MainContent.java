@@ -2,6 +2,7 @@ package com.ogadai.ogadai_secure;
 
 import android.app.ActionBar;
 import android.content.Context;
+import android.os.Handler;
 import android.util.AttributeSet;
 import android.view.View;
 import android.widget.RelativeLayout;
@@ -42,6 +43,13 @@ public class MainContent extends RelativeLayout
     public void setFullScreen(boolean fullScreen) {
         mFullScreen = fullScreen;
         setNavVisibility(!fullScreen);
+
+        if (!fullScreen) {
+            Handler handler = getHandler();
+            if (handler != null) {
+                handler.removeCallbacks(mNavHider);
+            }
+        }
     }
 
     @Override public void onSystemUiVisibilityChange(int visibility) {
