@@ -1,5 +1,6 @@
 package com.ogadai.ogadai_secure;
 
+import android.app.AlarmManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -16,6 +17,9 @@ public class BootCompletedReceiver extends BroadcastReceiver {
             System.out.println("Boot action restoring geofence");
             GeofenceSetup geoFence = new GeofenceSetup(context);
             geoFence.setup();
+
+            System.out.println("Boot action restoring daily alarm");
+            AlarmReceiver.setupDailyAlarm(context);
         }
         System.out.println("Boot action completed");
     }

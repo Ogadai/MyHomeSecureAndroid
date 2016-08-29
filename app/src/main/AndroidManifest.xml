@@ -53,6 +53,7 @@
             </intent-filter>
         </receiver>
         <receiver android:name=".awaystatus.GeofenceReceiver"></receiver>
+        <receiver android:name=".AlarmReceiver"></receiver>
 
         <receiver android:name="com.microsoft.windowsazure.notifications.NotificationsBroadcastReceiver"
             android:permission="com.google.android.c2dm.permission.SEND">

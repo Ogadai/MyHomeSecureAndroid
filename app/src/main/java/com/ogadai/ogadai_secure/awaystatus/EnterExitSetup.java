@@ -5,6 +5,7 @@ import android.os.AsyncTask;
 import android.util.Log;
 
 import com.google.gson.Gson;
+import com.ogadai.ogadai_secure.AlarmReceiver;
 import com.ogadai.ogadai_secure.IServerRequest;
 import com.ogadai.ogadai_secure.ServerRequest;
 import com.ogadai.ogadai_secure.notifications.ShowNotification;
@@ -33,6 +34,9 @@ public class EnterExitSetup implements IEnterExitSetup {
     @Override
     public void remove() {
         mGeofenceSetup.remove();
+
+        System.out.println("Removing daily alarm");
+        AlarmReceiver.cancelAlarm(mContext);
     }
 
     private void requestNewTokenOnThread(final Runnable failCallback) {
@@ -88,6 +92,9 @@ public class EnterExitSetup implements IEnterExitSetup {
 
             mGeofenceSetup.setLocation(location.getLatitude(), location.getLongitude(), location.getRadius());
             mGeofenceSetup.setup();
+
+            System.out.println("Setting up daily alarm");
+            AlarmReceiver.setupDailyAlarm(mContext);
         } catch (Exception e) {
             System.out.println("Error getting hub location - " + e.toString());
             failCallback.run();
