@@ -5,18 +5,14 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
 
-import com.ogadai.ogadai_secure.CameraFragment;
+import com.ogadai.ogadai_secure.CameraFeed;
 import com.ogadai.ogadai_secure.ServerRequest;
 import com.ogadai.ogadai_secure.awaystatus.AwayStatusUpdate;
 import com.ogadai.ogadai_secure.awaystatus.CheckIfHomeCallback;
 import com.ogadai.ogadai_secure.awaystatus.GeofenceSetup;
 import com.ogadai.ogadai_secure.awaystatus.ManageAwayStatus;
 
-import org.glassfish.tyrus.client.auth.AuthenticationException;
-
-import java.io.IOException;
 import java.net.HttpURLConnection;
-import java.util.Date;
 import java.util.Random;
 
 /**
@@ -35,18 +31,11 @@ public class StateNotificationHandler {
         ShowNotification notify = new ShowNotification(mContext);
         final String title = message.getState() + " has been activated!";
 
-        Bitmap snapshot = CameraFragment.getLastImage();
-        if (snapshot != null && (new Date().getTime() - CameraFragment.getLastImageDate().getTime() > 2 * 60 * 1000)) {
-            snapshot = null;
-        }
-
-        notify.show(message.getState(), title, ShowNotification.STATEID, snapshot, false);
+        notify.show(message.getState(), title, ShowNotification.STATEID, null, false);
 
         checkIfHome();
 
-        if (snapshot == null) {
-            updateNotificationWithSnapshot(message);
-        }
+        updateNotificationWithSnapshot(message);
     }
 
     private void checkIfHome() {
@@ -74,7 +63,7 @@ public class StateNotificationHandler {
                     HttpURLConnection urlConnection = ServerRequest.setupConnectionWithAuth(mContext, "GET", "camerasnapshot?node=garage&thumbnail=true&i=" + Integer.toString(index), null);
                     Bitmap snapshot = BitmapFactory.decodeStream(urlConnection.getInputStream());
 
-                    CameraFragment.setLastImage(snapshot);
+                    CameraFeed.setLastImage("garage", snapshot);
 
                     // Update the notification
                     System.out.println("updating notification with snapshot");
