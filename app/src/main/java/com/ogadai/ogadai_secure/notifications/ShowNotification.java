@@ -36,10 +36,10 @@ public class ShowNotification {
     }
 
     public void show(String title, String content, int id) {
-        show(title, content, id, null, false);
+        show(title, content, id, null, false, false);
     }
 
-    public void show(String title, String content, int id, Bitmap largeIcon, boolean update) {
+    public void show(String title, String content, int id, Bitmap largeIcon, boolean update, boolean sound) {
         // Creates an explicit intent for an Activity in your app
         Intent resultIntent = new Intent(mContext, MainActivity.class);
         resultIntent.putExtra(MainActivity.EXTRA_SHOWFRAGMENT, "monitor");
@@ -86,7 +86,7 @@ public class ShowNotification {
                     .addAction(R.drawable.ic_action_video, mContext.getString(R.string.notify_action_view), viewActivityIntent)
                     .addAction(R.drawable.notification, mContext.getString(R.string.notify_action_home), pHomeIntent);
 
-            if (!update) {
+            if (sound && !update) {
                 builder = builder
                     .setSound(notifySound)
                     .setDefaults(Notification.DEFAULT_LIGHTS | Notification.DEFAULT_VIBRATE);

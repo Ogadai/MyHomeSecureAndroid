@@ -15,7 +15,9 @@ import java.util.Random;
 public class CameraFeed {
     private Activity mActivity;
     private String mNode;
+    private String mName;
     private Listener mListener;
+    private boolean mStreaming;
 
     private StreamingStatus mStatus = null;
 
@@ -26,31 +28,30 @@ public class CameraFeed {
         mLastImages.put(node, image);
     }
 
-    public CameraFeed(Activity activity, String node) {
+    public CameraFeed(Activity activity, String node, String name) {
         mActivity = activity;
         mNode = node;
+        mName = name;
+        takeSnapshotTask();
     }
 
-    public void startVideoTask() {
-        if (mListener != null) {
-            mListener.updated();
-        }
-
+    public void close() {
+        mListener = null;
         stopVideoTask();
-        mStatus = new StreamingStatus();
-
-        Thread worker = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                startVideo();
-            }
-        });
-        worker.start();
     }
-    public void stopVideoTask() {
-        if (mStatus != null) {
-            mStatus.setStreaming(false);
-            mStatus = null;
+
+    public String getNode() { return mNode; }
+    public String getName() { return mName; }
+
+    public boolean getStreaming() {
+        return mStreaming;
+    }
+    public void setStreaming(boolean streaming) {
+        mStreaming = streaming;
+        if (streaming) {
+            startVideoTask();
+        } else {
+            stopVideoTask();
         }
     }
 
@@ -66,37 +67,81 @@ public class CameraFeed {
         return mLastImages.get(mNode);
     }
 
+    private void startVideoTask() {
+        stopVideoTask();
+        mStatus = new StreamingStatus();
+
+        Thread worker = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                startVideo();
+            }
+        });
+        worker.start();
+    }
+    private void stopVideoTask() {
+        if (mStatus != null) {
+            mStatus.setStreaming(false);
+            mStatus = null;
+        }
+    }
+
     private void startVideo() {
         final StreamingStatus status = mStatus;
         if (status.getStreaming()) return;
         status.setStreaming(true);
 
-        int index = mRandGen.nextInt(1000000);
+        System.out.println("Started stream from " + mNode);
         while(status.getStreaming()) {
-
-            HttpURLConnection urlConnection = null;
-            try {
-                urlConnection = ServerRequest.setupConnectionWithAuth(mActivity, "GET", "camerasnapshot?node=" + mNode + "&i=" + Integer.toString(index), null);
-                final Bitmap cameraImage = BitmapFactory.decodeStream(urlConnection.getInputStream());
-                mLastImages.put(mNode, cameraImage);
-                index++;
-
-                mActivity.runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (mListener != null) {
-                            mListener.updated();
-                        }
-                    }
-                });
-            } catch(Exception e) {
-                System.out.println("Error downloading snapshot - " + e.getMessage());
+            if (!downloadSnapshot(true)) {
                 status.setStreaming(false);
-            } finally {
-                if (urlConnection != null) urlConnection.disconnect();
             }
         }
+        System.out.println("Closed stream from " + mNode);
     }
+
+    private void takeSnapshotTask() {
+        Thread worker = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                downloadSnapshot(false);
+            }
+        });
+        worker.start();
+    }
+
+    private boolean downloadSnapshot(boolean streaming) {
+        HttpURLConnection urlConnection = null;
+        boolean result = false;
+        try {
+            int index = mRandGen.nextInt(1000000);
+            String suffix = streaming ? "" : "&singleImage=true";
+            System.out.println("Downloading " + (streaming ? "stream" : "single") + " snapshot from " + mNode);
+
+            urlConnection = ServerRequest.setupConnectionWithAuth(mActivity, "GET", "camerasnapshot?node=" + mNode +
+                    "&i=" + Integer.toString(index) + suffix, null);
+            final Bitmap cameraImage = BitmapFactory.decodeStream(urlConnection.getInputStream());
+            mLastImages.put(mNode, cameraImage);
+
+            System.out.println("Downloaded " + (streaming ? "stream" : "single") + " snapshot from " + mNode);
+
+            mActivity.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    if (mListener != null) {
+                        mListener.updated();
+                    }
+                }
+            });
+            result = true;
+        } catch(Exception e) {
+            System.out.println("Error downloading snapshot - " + e.getMessage());
+        } finally {
+            if (urlConnection != null) urlConnection.disconnect();
+        }
+        return result;
+    }
+
     private class StreamingStatus
     {
         private boolean mStreaming;

@@ -85,6 +85,16 @@ public class CameraFragment extends MainFragment {
                 catch(Exception e) {
                     System.out.println("error getting JSON: " + e.toString());
                     createAndShowDialogFromTask(e, "Error getting cameras");
+
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            initialiseCameras(new CameraInfo[]{
+                                    new CameraInfo("Garage", "garage"),
+                                    new CameraInfo("Car", "car")
+                            });
+                        }
+                    });
                     return null;
                 }
                 finally {
@@ -103,8 +113,7 @@ public class CameraFragment extends MainFragment {
         if (cameras.length > 0) {
             mCameraFeeds = new ArrayList<>();
             for (CameraInfo camera: cameras) {
-                CameraFeed cameraFeed = new CameraFeed(getActivity(), camera.getNode());
-                cameraFeed.startVideoTask();
+                CameraFeed cameraFeed = new CameraFeed(getActivity(), camera.getNode(), camera.getName());
                 mCameraFeeds.add(cameraFeed);
             }
 
@@ -115,12 +124,7 @@ public class CameraFragment extends MainFragment {
     }
 
     private void disconnect() {
-        if (mCameraFeeds != null) {
-            for(CameraFeed cameraFeed: mCameraFeeds) {
-                cameraFeed.stopVideoTask();
-            }
-            mCameraFeeds = null;
-        }
+        mCameraView.close();
     }
 
     private void clearTask() {

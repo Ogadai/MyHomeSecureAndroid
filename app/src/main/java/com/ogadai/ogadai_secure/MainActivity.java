@@ -166,7 +166,7 @@ public class MainActivity extends Activity
                 .commit();
         onSectionAttached(position);
 
-        mMainContent.setFullScreen(position == 2);
+//        mMainContent.setFullScreen(position == 2);
 //        setRequestedOrientation(position == 2
 //                ? ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
 //                : ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR);

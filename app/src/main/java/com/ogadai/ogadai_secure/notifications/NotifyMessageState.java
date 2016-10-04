@@ -14,6 +14,15 @@ public class NotifyMessageState extends NotifyMessageBase {
     @SerializedName("State")
     private String mState;
 
+    @SerializedName("Active")
+    private boolean mActive;
+
+    @SerializedName("Node")
+    private String mNode;
+
+    @SerializedName("Rule")
+    private String mRule;
+
     public NotifyMessageState(String state) {
         super(MESSAGE);
         setState(state);
@@ -22,8 +31,22 @@ public class NotifyMessageState extends NotifyMessageBase {
     public String getState() { return mState; }
     public void setState(String state) { mState = state; }
 
+    public String getNode() { return mNode; }
+    public void setNode(String node) { mNode = node; }
+
+    public String getRule() { return mRule; }
+    public void setRule(String rule) { mRule = rule; }
+
     public static NotifyMessageState FromJSON(String json) throws IOException {
         Gson gson = new Gson();
         return gson.fromJson(json, NotifyMessageState.class);
+    }
+
+    public boolean isActive() {
+        return mActive;
+    }
+
+    public void setActive(boolean active) {
+        mActive = active;
     }
 }

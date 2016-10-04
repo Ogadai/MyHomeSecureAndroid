@@ -23,19 +23,34 @@ public class StateNotificationHandler {
 
     private static Random mRandGen = new Random();
 
+    private static String mLastState = null;
+    private static Bitmap mLastSnapshot = null;
+    private static String mLastNode = null;
+
     public StateNotificationHandler(Context context) {
         mContext = context;
     }
     public void received(final NotifyMessageState message) {
         System.out.println("state notification received - " + message.getState());
         ShowNotification notify = new ShowNotification(mContext);
-        final String title = message.getState() + " has been activated!";
 
-        notify.show(message.getState(), title, ShowNotification.STATEID, null, false);
+        if (message.isActive()) {
+            String messageNode = message.getNode().toLowerCase();
+            if (messageNode != null && messageNode.length() > 0) {
+                mLastNode = messageNode;
+            }
+            mLastState = message.getState();
 
-        checkIfHome();
+            notify.show(message.getState(), getTitle(message), ShowNotification.STATEID, mLastSnapshot, false, useSound(message));
 
-        updateNotificationWithSnapshot(message);
+            checkIfHome();
+
+            if (mLastNode != null) {
+                updateNotificationWithSnapshot(message);
+            }
+        } else if (message.getState() == mLastState) {
+            notify.clear();
+        }
     }
 
     private void checkIfHome() {
@@ -46,9 +61,14 @@ public class StateNotificationHandler {
                 AwayStatusUpdate statusUpdate = new AwayStatusUpdate(mContext);
                 try {
                     statusUpdate.updateStatus(ManageAwayStatus.ENTERED_EVENT);
+
+                    // Clear the notification if home
+                    ShowNotification notify = new ShowNotification(mContext);
+                    notify.clear();
                 } catch (Exception e) {
                     System.out.println("error updating status to entered - " + e.toString());
                 }
+
             }
         });
     }
@@ -60,17 +80,20 @@ public class StateNotificationHandler {
                 try {
                     // Get a new snapshot image
                     System.out.println("getting snapshot for notification");
-                    HttpURLConnection urlConnection = ServerRequest.setupConnectionWithAuth(mContext, "GET", "camerasnapshot?node=garage&thumbnail=true&i=" + Integer.toString(index), null);
+                    HttpURLConnection urlConnection = ServerRequest.setupConnectionWithAuth(mContext, "GET",
+                            "camerasnapshot?node=" + mLastNode + "&thumbnail=true&i=" + Integer.toString(index), null);
                     Bitmap snapshot = BitmapFactory.decodeStream(urlConnection.getInputStream());
+                    mLastSnapshot = snapshot;
 
-                    CameraFeed.setLastImage("garage", snapshot);
+                    CameraFeed.setLastImage(mLastNode, snapshot);
 
-                    // Update the notification
-                    System.out.println("updating notification with snapshot");
+                    if (message.getState() == mLastState) {
+                        // Update the notification
+                        System.out.println("updating notification with snapshot");
 
-                    ShowNotification notify = new ShowNotification(mContext);
-                    final String title = message.getState() + " has been activated!";
-                    notify.show(message.getState(), title, ShowNotification.STATEID, snapshot, true);
+                        ShowNotification notify = new ShowNotification(mContext);
+                        notify.show(message.getState(), getTitle(message), ShowNotification.STATEID, snapshot, true, useSound(message));
+                    }
                 } catch (Exception e) {
                     System.out.println("error getting notification snapshot - " + e.toString());
                 }
@@ -78,5 +101,13 @@ public class StateNotificationHandler {
             }
         };
         task.execute();
+    }
+
+    private String getTitle(NotifyMessageState message) {
+        return message.getState() + " has been activated!";
+    }
+
+    private boolean useSound(NotifyMessageState message) {
+        return message.getState() == "Alarm";
     }
 }
