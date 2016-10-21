@@ -24,6 +24,7 @@ import com.ogadai.ogadai_secure.StateItem;
 public class ShowNotification {
     public static final int ERRORID = 8923;
     public static final int STATEID = 8924;
+    public static final int AWAYSTATUSID = 8925;
 
     private Context mContext;
 
@@ -40,6 +41,10 @@ public class ShowNotification {
     }
 
     public void show(String title, String content, int id, Bitmap largeIcon, boolean update, boolean sound) {
+        show(title, content, id, largeIcon, update, sound, R.drawable.notification);
+    }
+
+    public void show(String title, String content, int id, Bitmap largeIcon, boolean update, boolean sound, int smallIcon) {
         // Creates an explicit intent for an Activity in your app
         Intent resultIntent = new Intent(mContext, MainActivity.class);
         resultIntent.putExtra(MainActivity.EXTRA_SHOWFRAGMENT, "monitor");
@@ -56,15 +61,18 @@ public class ShowNotification {
         PendingIntent mainActivityIntent =
                 stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
 
+        int color = mContext.getResources().getColor(R.color.accent);
+
         NotificationCompat.Builder builder =
                 new NotificationCompat.Builder(mContext)
                         .setContentTitle(title)
-                        .setSmallIcon(R.drawable.notification)
+                        .setSmallIcon(smallIcon)
                         .setAutoCancel(true)
                         .setContentText(content)
+                        .setColor(color)
                         .setContentIntent(mainActivityIntent);
 
-        if (id == STATEID) {
+        if (id == STATEID || id == AWAYSTATUSID) {
             Uri notifySound = Uri.parse(ContentResolver.SCHEME_ANDROID_RESOURCE
                     + "://" + mContext.getPackageName() + "/raw/alarm");
 
@@ -109,6 +117,12 @@ public class ShowNotification {
         NotificationManager notificationManager =
                 (NotificationManager) mContext.getSystemService(Context.NOTIFICATION_SERVICE);
         notificationManager.cancelAll();
+    }
+
+    public void clear(int id) {
+        NotificationManager notificationManager =
+                (NotificationManager) mContext.getSystemService(Context.NOTIFICATION_SERVICE);
+        notificationManager.cancel(id);
     }
 
     private Bitmap cropForNotification(Bitmap source) {

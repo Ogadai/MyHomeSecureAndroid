@@ -7,6 +7,8 @@ import android.util.Log;
 
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.GeofencingEvent;
+import com.ogadai.ogadai_secure.R;
+import com.ogadai.ogadai_secure.notifications.ShowNotification;
 
 public class GeofenceReceiver extends BroadcastReceiver {
     public GeofenceReceiver() {
@@ -25,6 +27,8 @@ public class GeofenceReceiver extends BroadcastReceiver {
                     || (transition == Geofence.GEOFENCE_TRANSITION_EXIT)) {
                 postEvent(context, transition == Geofence.GEOFENCE_TRANSITION_ENTER
                         ? ManageAwayStatus.ENTERED_EVENT : ManageAwayStatus.EXITED_EVENT);
+
+                notifyUser(context, transition == Geofence.GEOFENCE_TRANSITION_EXIT);
             }
         } else {
             // Log the error.
@@ -36,5 +40,22 @@ public class GeofenceReceiver extends BroadcastReceiver {
     protected void postEvent(Context context, String eventName) {
         IManageAwayStatus manageStatus = new ManageAwayStatus(context);
         manageStatus.setAwayStatus(eventName);
+    }
+
+    protected void notifyUser(Context context, boolean exited) {
+        ShowNotification showNotification = new ShowNotification(context);
+        if (exited) {
+            showNotification.show(
+                    "Away from home",
+                    "Away mode is active",
+                    ShowNotification.AWAYSTATUSID,
+                    null,
+                    false,
+                    false,
+                    R.drawable.notification_exit
+                    );
+        } else {
+            showNotification.clear(ShowNotification.AWAYSTATUSID);
+        }
     }
 }
