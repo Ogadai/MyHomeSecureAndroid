@@ -34,6 +34,7 @@ public class StateNotificationHandler {
         System.out.println("state notification received - " + message.getState());
         ShowNotification notify = new ShowNotification(mContext);
 
+        int notificationId = getId(message);
         if (message.isActive()) {
             String messageNode = message.getNode().toLowerCase();
             if (messageNode != null && messageNode.length() > 0) {
@@ -41,15 +42,17 @@ public class StateNotificationHandler {
             }
             mLastState = message.getState();
 
-            notify.show(message.getState(), getTitle(message), ShowNotification.STATEID, mLastSnapshot, false, useSound(message));
+            notify.show(message.getState(), getTitle(message), notificationId, mLastSnapshot, false, useSound(message));
 
-            checkIfHome();
+            if (alarmState(message)) {
+                checkIfHome();
 
-            if (mLastNode != null) {
-                updateNotificationWithSnapshot(message);
+                if (mLastNode != null) {
+                    updateNotificationWithSnapshot(message);
+                }
             }
-        } else if (message.getState() == mLastState) {
-            notify.clear();
+        } else {
+            notify.clear(notificationId);
         }
     }
 
@@ -104,10 +107,16 @@ public class StateNotificationHandler {
     }
 
     private String getTitle(NotifyMessageState message) {
-        return message.getState() + " has been activated!";
+        return message.getState() != "Away"
+                ? message.getState() + " has been activated!"
+                : message.getState() + " mode is active";
     }
 
+    private int getId(NotifyMessageState message) { return alarmState(message) ? ShowNotification.STATEID : ShowNotification.AWAYSTATUSID; }
     private boolean useSound(NotifyMessageState message) {
         return message.getState() == "Alarm";
+    }
+    private boolean alarmState(NotifyMessageState message) {
+        return message.getState() != "Away";
     }
 }

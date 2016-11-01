@@ -41,7 +41,8 @@ import java.util.TimeZone;
  */
 public class ServerRequest implements IServerRequest {
     public static String APPKEY = "RhCLppCOuzkwkzZcDDLGcZQTOTwUBj90";
-    public static String ROOTPATH = "https://ogadai-secure.azure-mobile.net/";
+    public static String HOSTNAME = "ogadai-secure.azure-mobile.net";
+    public static String ROOTPATH = "https://" + HOSTNAME + "/";
     public static String ROOTAPIPATH = ROOTPATH + "api/";
 
     public static String get(Context context, String path) throws IOException, AuthenticationException {

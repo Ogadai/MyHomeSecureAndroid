@@ -2,6 +2,8 @@ package com.ogadai.ogadai_secure.socket;
 
 import android.os.AsyncTask;
 
+import com.ogadai.ogadai_secure.ServerRequest;
+
 import org.glassfish.tyrus.client.auth.AuthenticationException;
 
 import java.net.URI;
@@ -18,6 +20,9 @@ public class HomeSecureSocket implements IHomeSecureSocket {
     public HomeSecureSocket(IHomeSecureSocketClient client) {
         mClient = client;
     }
+
+    public static String ROOTPATH = "wss://" + ServerRequest.HOSTNAME + "/";
+    public static String ROOTAPIPATH = ROOTPATH + "api/";
 
     @Override
     public void Connect(String token) {
@@ -80,7 +85,7 @@ public class HomeSecureSocket implements IHomeSecureSocket {
                 }
             });
 
-            mClientEndPoint.Connect(new URI("wss://ogadai-secure.azure-mobile.net/api/userapp"));
+            mClientEndPoint.Connect(new URI(ROOTAPIPATH + "userapp"));
         } catch(AuthenticationException authEx) {
             mClient.connectionError(authEx);
         } catch (Exception e) {

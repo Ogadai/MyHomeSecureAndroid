@@ -41,7 +41,11 @@ public class ShowNotification {
     }
 
     public void show(String title, String content, int id, Bitmap largeIcon, boolean update, boolean sound) {
-        show(title, content, id, largeIcon, update, sound, R.drawable.notification);
+        int smallIcon = id == AWAYSTATUSID
+                ? R.drawable.notification_exit
+                : R.drawable.notification;
+
+        show(title, content, id, largeIcon, update, sound, smallIcon);
     }
 
     public void show(String title, String content, int id, Bitmap largeIcon, boolean update, boolean sound, int smallIcon) {
