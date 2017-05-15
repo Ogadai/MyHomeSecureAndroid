@@ -1,0 +1,44 @@
+{
+  "project_info": {
+    "project_number": "724129164049",
+    "project_id": "ogadai-secure"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:724129164049:android:8c8e4081c2704b5a",
+        "android_client_info": {
+          "package_name": "com.ogadai.ogadai_secure"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "724129164049-6h5tdq1i164srt8hv8d4iint9k9osgmd.apps.googleusercontent.com",
+          "client_type": 3
+        },
+        {
+          "client_id": "724129164049-r7bo4g8l7b3d9n0fb2mqeak4tri0nojn.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCgfubCCTbnAdnkj8TWlUFuCB4kS2iy-Qg"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 1
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

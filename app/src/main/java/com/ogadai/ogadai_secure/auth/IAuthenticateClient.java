@@ -8,6 +8,6 @@ import com.microsoft.windowsazure.mobileservices.authentication.MobileServiceUse
  * Created by alee on 04/02/2016.
  */
 public interface IAuthenticateClient {
-    void authenticated(MobileServiceUser user);
+    void authenticated();
     void showError(Exception exception, String title);
 }

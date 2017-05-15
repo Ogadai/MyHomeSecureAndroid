@@ -9,11 +9,15 @@ import com.microsoft.windowsazure.mobileservices.authentication.MobileServiceAut
 import com.microsoft.windowsazure.mobileservices.authentication.MobileServiceUser;
 import com.microsoft.windowsazure.mobileservices.http.ServiceFilterRequest;
 import com.microsoft.windowsazure.mobileservices.http.ServiceFilterResponse;
+import com.ogadai.ogadai_secure.MainActivity;
+import com.ogadai.ogadai_secure.ServerRequest;
+
+import java.net.MalformedURLException;
 
 /**
  * Created by alee on 04/02/2016.
  */
-public class GoogleAuthenticator implements IGoogleAuthenticator {
+public class OldGoogleAuthenticator implements IGoogleAuthenticator {
 
     /**
      * Mobile Service Client reference
@@ -26,15 +30,23 @@ public class GoogleAuthenticator implements IGoogleAuthenticator {
     public boolean bAuthenticating = false;
     public final Object mAuthenticationLock = new Object();
 
-    public GoogleAuthenticator(Context context) {
+    public OldGoogleAuthenticator(Context context) {
         mTokenCache = new TokenCache(context, TokenCache.GOOGLE_PREFFILE);
     }
 
-    public void authenticate(MobileServiceClient client, boolean update, IAuthenticateClient authenticateClient) {
-        mClient = client;
-        mAuthenticateClient = authenticateClient;
+    public void authenticate(Context context, boolean update, IAuthenticateClient authenticateClient) {
+        // Mobile Service URL and key
+        try {
+            mClient = new MobileServiceClient(
+                    ServerRequest.ROOTPATH,
+                    context);
 
-        doAuthenticate(update);
+            mAuthenticateClient = authenticateClient;
+
+            doAuthenticate(update);
+        } catch (MalformedURLException e) {
+            System.out.println(e.getMessage());
+        }
     }
 
     /**
@@ -63,7 +75,7 @@ public class GoogleAuthenticator implements IGoogleAuthenticator {
                                 if (exception == null) {
                                     if (user != null) {
                                         cacheUserToken(user);
-                                        mAuthenticateClient.authenticated(user);
+                                        mAuthenticateClient.authenticated();
                                     }
                                 } else {
                                     mAuthenticateClient.showError(exception, "Login Error");
@@ -83,7 +95,7 @@ public class GoogleAuthenticator implements IGoogleAuthenticator {
                 bAuthenticating = false;
                 mAuthenticationLock.notifyAll();
             }
-            mAuthenticateClient.authenticated(mClient.getCurrentUser());
+            mAuthenticateClient.authenticated();
         }
     }
 

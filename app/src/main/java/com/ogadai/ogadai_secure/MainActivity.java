@@ -6,41 +6,39 @@ import android.app.AlertDialog;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.content.Intent;
-import android.content.pm.ActivityInfo;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.v4.app.FragmentActivity;
 import android.support.v4.widget.DrawerLayout;
-import android.view.View;
 import android.widget.ProgressBar;
 
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.SettableFuture;
-import com.microsoft.windowsazure.mobileservices.MobileServiceClient;
-import com.microsoft.windowsazure.mobileservices.authentication.MobileServiceUser;
-import com.microsoft.windowsazure.mobileservices.http.NextServiceFilterCallback;
-import com.microsoft.windowsazure.mobileservices.http.ServiceFilter;
-import com.microsoft.windowsazure.mobileservices.http.ServiceFilterRequest;
-import com.microsoft.windowsazure.mobileservices.http.ServiceFilterResponse;
-import com.ogadai.ogadai_secure.auth.GoogleAuthenticator;
-import com.ogadai.ogadai_secure.auth.IAuthenticateClient;
+//import com.google.common.util.concurrent.FutureCallback;
+//import com.google.common.util.concurrent.Futures;
+//import com.google.common.util.concurrent.ListenableFuture;
+//import com.google.common.util.concurrent.SettableFuture;
+//import com.microsoft.windowsazure.mobileservices.authentication.MobileServiceUser;
+//import com.microsoft.windowsazure.mobileservices.http.NextServiceFilterCallback;
+//import com.microsoft.windowsazure.mobileservices.http.ServiceFilter;
+//import com.microsoft.windowsazure.mobileservices.http.ServiceFilterRequest;
+//import com.microsoft.windowsazure.mobileservices.http.ServiceFilterResponse;
+import com.google.android.gms.auth.api.Auth;
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
+import com.google.android.gms.auth.api.signin.GoogleSignInResult;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.Scopes;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.Scope;
+import com.ogadai.ogadai_secure.auth.CachedToken;
+import com.ogadai.ogadai_secure.auth.TokenCache;
 import com.ogadai.ogadai_secure.notifications.ShowNotification;
 
-import java.net.MalformedURLException;
-
-public class MainActivity extends Activity
-        implements NavigationDrawerFragment.NavigationDrawerCallbacks, IMainActivity {
+public class MainActivity extends FragmentActivity
+        implements NavigationDrawerFragment.NavigationDrawerCallbacks, IMainActivity,
+                GoogleApiClient.OnConnectionFailedListener {
     public static final String EXTRA_SHOWFRAGMENT = "com.ogadai.ogadai_secure.showCamera";
 
-    /**
-     * Mobile Service Client reference
-     */
-    private static MobileServiceClient mClient;
-
-    public static MobileServiceClient getClient() {
-        return mClient;
-    }
-
+    private GoogleApiClient mGoogleApiClient;
     private MainContent mMainContent;
 
     /**
@@ -57,6 +55,8 @@ public class MainActivity extends Activity
      * Used to store the last screen title. For use in {@link #restoreActionBar()}.
      */
     private CharSequence mTitle;
+
+    private static final int RC_SIGN_IN = 1983;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -100,27 +100,51 @@ public class MainActivity extends Activity
 
     public void doAuthenticate(boolean update)
     {
-        try {
-            // Create the Mobile Service Client instance, using the provided
-            clearFragments();
+        // Create the Mobile Service Client instance, using the provided
+        clearFragments();
 
-            // Mobile Service URL and key
-            mClient = new MobileServiceClient(
-                    ServerRequest.ROOTPATH, ServerRequest.APPKEY,
-                    this).withFilter(new ProgressFilter());
-            new GoogleAuthenticator(this).authenticate(mClient, update, new IAuthenticateClient() {
-                @Override
-                public void authenticated(MobileServiceUser user) {
-                    authenticateSuccessful();
-                }
+        // Configure sign-in to request the user's ID, email address, and basic
+        // profile. ID and basic profile are included in DEFAULT_SIGN_IN.
+        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestIdToken("724129164049-r7bo4g8l7b3d9n0fb2mqeak4tri0nojn.apps.googleusercontent.com")
+                .requestScopes(new Scope(Scopes.PLUS_LOGIN))
+                .requestScopes(new Scope(Scopes.PLUS_ME))
+                .requestEmail()
+                .build();
 
-                @Override
-                public void showError(Exception exception, String title) {
-                    createAndShowDialogFromTask(exception, title);
-                }
-            });
-        } catch (MalformedURLException e) {
-            System.out.println(e.getMessage());
+        // Build a GoogleApiClient with access to the Google Sign-In API and the
+        // options specified by gso.
+        mGoogleApiClient = new GoogleApiClient.Builder(this)
+                .enableAutoManage(this /* FragmentActivity */, this /* OnConnectionFailedListener */)
+                .addApi(Auth.GOOGLE_SIGN_IN_API, gso)
+                .build();
+
+        Intent signInIntent = Auth.GoogleSignInApi.getSignInIntent(mGoogleApiClient);
+        startActivityForResult(signInIntent, RC_SIGN_IN);
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        // Result returned from launching the Intent from GoogleSignInApi.getSignInIntent(...);
+        if (requestCode == RC_SIGN_IN) {
+            GoogleSignInResult result = Auth.GoogleSignInApi.getSignInResultFromIntent(data);
+
+            if (result.isSuccess()) {
+                // Signed in successfully, show authenticated UI.
+                GoogleSignInAccount acct = result.getSignInAccount();
+
+                System.out.println("Google SignIn successful as " + acct.getEmail());
+
+                TokenCache tokenCache = new TokenCache(this, TokenCache.GOOGLE_PREFFILE);
+                tokenCache.set(new CachedToken(acct.getEmail(), acct.getIdToken()));
+
+                authenticateSuccessful();
+            } else {
+                // Signed out, show unauthenticated UI.
+                System.out.println("Google SignIn was not successful");
+            }
         }
     }
 
@@ -267,45 +291,55 @@ public class MainActivity extends Activity
         builder.create().show();
     }
 
-    private class ProgressFilter implements ServiceFilter {
-
-        @Override
-        public ListenableFuture<ServiceFilterResponse> handleRequest(ServiceFilterRequest request, NextServiceFilterCallback nextServiceFilterCallback) {
-
-            final SettableFuture<ServiceFilterResponse> resultFuture = SettableFuture.create();
-
-
-            runOnUiThread(new Runnable() {
-
-                @Override
-                public void run() {
-                    if (mProgressBar != null) mProgressBar.setVisibility(ProgressBar.VISIBLE);
-                }
-            });
-
-            ListenableFuture<ServiceFilterResponse> future = nextServiceFilterCallback.onNext(request);
-
-            Futures.addCallback(future, new FutureCallback<ServiceFilterResponse>() {
-                @Override
-                public void onFailure(Throwable e) {
-                    resultFuture.setException(e);
-                }
-
-                @Override
-                public void onSuccess(ServiceFilterResponse response) {
-                    runOnUiThread(new Runnable() {
-
-                        @Override
-                        public void run() {
-                            if (mProgressBar != null) mProgressBar.setVisibility(ProgressBar.GONE);
-                        }
-                    });
-
-                    resultFuture.set(response);
-                }
-            });
-
-            return resultFuture;
-        }
+    @Override
+    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                createAndShowDialog("Failed to connecto for Google SignIn", "Google SignIn");
+            }
+        });
     }
+//
+//    public class ProgressFilter implements ServiceFilter {
+//
+//        @Override
+//        public ListenableFuture<ServiceFilterResponse> handleRequest(ServiceFilterRequest request, NextServiceFilterCallback nextServiceFilterCallback) {
+//
+//            final SettableFuture<ServiceFilterResponse> resultFuture = SettableFuture.create();
+//
+//
+//            runOnUiThread(new Runnable() {
+//
+//                @Override
+//                public void run() {
+//                    if (mProgressBar != null) mProgressBar.setVisibility(ProgressBar.VISIBLE);
+//                }
+//            });
+//
+//            ListenableFuture<ServiceFilterResponse> future = nextServiceFilterCallback.onNext(request);
+//
+//            Futures.addCallback(future, new FutureCallback<ServiceFilterResponse>() {
+//                @Override
+//                public void onFailure(Throwable e) {
+//                    resultFuture.setException(e);
+//                }
+//
+//                @Override
+//                public void onSuccess(ServiceFilterResponse response) {
+//                    runOnUiThread(new Runnable() {
+//
+//                        @Override
+//                        public void run() {
+//                            if (mProgressBar != null) mProgressBar.setVisibility(ProgressBar.GONE);
+//                        }
+//                    });
+//
+//                    resultFuture.set(response);
+//                }
+//            });
+//
+//            return resultFuture;
+//        }
+//    }
 }

@@ -34,7 +34,7 @@ public class HomeNotificationHandler extends NotificationsHandler {
                     if (hubId != null) {
                         String[] tags = new String[]{hubId};
                         System.out.println("registering notifications handler");
-                        MainActivity.getClient().getPush().register(gcmRegistrationId, tags);
+//                        MainActivity.getClient().getPush().register(gcmRegistrationId, tags);
                         successful = true;
                     }
                 }
@@ -59,7 +59,7 @@ public class HomeNotificationHandler extends NotificationsHandler {
             protected Void doInBackground(Void... params) {
                 try {
                     System.out.println("unregistering notifications handler");
-                    MainActivity.getClient().getPush().unregisterAll(gcmRegistrationId);
+//                    MainActivity.getClient().getPush().unregisterAll(gcmRegistrationId);
                 }
                 catch(Exception e) {
                     // handle error
