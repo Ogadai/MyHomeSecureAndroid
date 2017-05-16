@@ -44,9 +44,14 @@ public class WebsocketClientEndpoint {
             Throwable cause = depEx.getCause();
             if (cause instanceof AuthenticationException) {
                 throw (AuthenticationException)cause;
+            } else if (cause instanceof NullPointerException) {
+                throw new AuthenticationException(cause.getMessage());
             }
             throw depEx;
+        } catch(Exception ex) {
+            throw ex;
         }
+
     }
 
     public void Disconnect() {

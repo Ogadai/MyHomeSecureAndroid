@@ -18,17 +18,17 @@ public class WebsocketClientConfigurator extends ClientEndpointConfig.Configurat
 
     @Override
     public void beforeRequest(Map<String, List<String>> headers) {
-        headers.remove("X-ZUMO-AUTH");
+        headers.remove("AUTHTOKEN");
 
         List<String> authList = new ArrayList<String>();
         authList.add(mAuthenticationToken);
-        headers.put("X-ZUMO-AUTH", authList);
+        headers.put("AUTHTOKEN", authList);
 
-        headers.remove("X-ZUMO-APPLICATION");
+        headers.remove("APPKEY");
 
         List<String> appList = new ArrayList<String>();
         appList.add(mAppKey);
-        headers.put("X-ZUMO-APPLICATION", appList);
+        headers.put("APPKEY", appList);
 
         mAppKey = "";
         mAuthenticationToken = "";

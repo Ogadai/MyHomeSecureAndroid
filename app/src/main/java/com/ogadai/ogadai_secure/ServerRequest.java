@@ -41,7 +41,7 @@ import java.util.TimeZone;
  */
 public class ServerRequest implements IServerRequest {
     public static String APPKEY = "RhCLppCOuzkwkzZcDDLGcZQTOTwUBj90";
-    public static String HOSTNAME = "ogadai-secure.azure-mobile.net";
+    public static String HOSTNAME = "ogadai-secure.azure-mobile.net"; // local "10.0.2.2:8080"
     public static String ROOTPATH = "https://" + HOSTNAME + "/";
     public static String ROOTAPIPATH = ROOTPATH + "api/";
 
@@ -137,7 +137,6 @@ public class ServerRequest implements IServerRequest {
         try {
             InputStream inputStream = urlConnection.getInputStream();
 
-
             BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
             StringBuilder stringBuilder = new StringBuilder();
             String line;
@@ -146,6 +145,13 @@ public class ServerRequest implements IServerRequest {
             }
             bufferedReader.close();
             return stringBuilder.toString();
+        }
+        catch(Exception e) {
+            int responseCode = urlConnection.getResponseCode();
+            if (responseCode == 401) {
+                throw new AuthenticationException(urlConnection.getResponseMessage());
+            }
+            throw new IOException("Server error. Response code: " + Integer.toString(responseCode) + " - " + urlConnection.getResponseMessage(), e);
         }
         finally {
             urlConnection.disconnect();
@@ -159,11 +165,11 @@ public class ServerRequest implements IServerRequest {
             urlConnection.setRequestMethod(method);
         }
         if (mAppKey != null) {
-            urlConnection.setRequestProperty("X-ZUMO-APPLICATION", mAppKey);
+            urlConnection.setRequestProperty("APPKEY", mAppKey);
         }
 
         if (mAuthenticationToken != null) {
-            urlConnection.setRequestProperty("X-ZUMO-AUTH", mAuthenticationToken);
+            urlConnection.setRequestProperty("AUTHTOKEN", mAuthenticationToken);
         }
 
         try {

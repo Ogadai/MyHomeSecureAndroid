@@ -5,12 +5,17 @@ import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
 
+import com.microsoft.windowsazure.mobileservices.MobileServiceClient;
+import com.microsoft.windowsazure.mobileservices.notifications.Installation;
 import com.microsoft.windowsazure.notifications.NotificationsHandler;
 import com.ogadai.ogadai_secure.MainActivity;
 import com.ogadai.ogadai_secure.ServerRequest;
 import com.ogadai.ogadai_secure.awaystatus.HubLocationMessage;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by alee on 24/02/2016.
@@ -32,9 +37,11 @@ public class HomeNotificationHandler extends NotificationsHandler {
                 try {
                     String hubId = getHubId(fContext);
                     if (hubId != null) {
-                        String[] tags = new String[]{hubId};
+                        List<String> tags = new ArrayList<String>();
+                        tags.add(hubId);
+                        Installation installation = new Installation(null, null, gcmRegistrationId, null, tags, null);
                         System.out.println("registering notifications handler");
-//                        MainActivity.getClient().getPush().register(gcmRegistrationId, tags);
+                        getClient(fContext).getPush().register(installation);
                         successful = true;
                     }
                 }
@@ -53,13 +60,14 @@ public class HomeNotificationHandler extends NotificationsHandler {
     @Override
     public void onUnregistered(Context context, final String gcmRegistrationId) {
         super.onUnregistered(context, gcmRegistrationId);
+        final Context fContext = context;
 
         new AsyncTask<Void, Void, Void>() {
 
             protected Void doInBackground(Void... params) {
                 try {
                     System.out.println("unregistering notifications handler");
-//                    MainActivity.getClient().getPush().unregisterAll(gcmRegistrationId);
+                    getClient(fContext).getPush().unregister();
                 }
                 catch(Exception e) {
                     // handle error
@@ -69,6 +77,12 @@ public class HomeNotificationHandler extends NotificationsHandler {
                 return null;
             }
         }.execute();
+    }
+
+    private MobileServiceClient getClient(Context context) throws MalformedURLException {
+        return new MobileServiceClient(
+                ServerRequest.ROOTPATH,
+                context);
     }
 
     @Override

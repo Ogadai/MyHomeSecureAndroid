@@ -100,27 +100,36 @@ public class MainActivity extends FragmentActivity
 
     public void doAuthenticate(boolean update)
     {
-        // Create the Mobile Service Client instance, using the provided
         clearFragments();
 
-        // Configure sign-in to request the user's ID, email address, and basic
-        // profile. ID and basic profile are included in DEFAULT_SIGN_IN.
-        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                .requestIdToken("724129164049-r7bo4g8l7b3d9n0fb2mqeak4tri0nojn.apps.googleusercontent.com")
-                .requestScopes(new Scope(Scopes.PLUS_LOGIN))
-                .requestScopes(new Scope(Scopes.PLUS_ME))
-                .requestEmail()
-                .build();
+        boolean doAuth = update;
+        if (!doAuth) {
+            TokenCache tokenCache = new TokenCache(this, TokenCache.GOOGLE_PREFFILE);
+            doAuth = (tokenCache.get() == null);
+        }
 
-        // Build a GoogleApiClient with access to the Google Sign-In API and the
-        // options specified by gso.
-        mGoogleApiClient = new GoogleApiClient.Builder(this)
-                .enableAutoManage(this /* FragmentActivity */, this /* OnConnectionFailedListener */)
-                .addApi(Auth.GOOGLE_SIGN_IN_API, gso)
-                .build();
+        if (doAuth) {
+            // Configure sign-in to request the user's ID, email address, and basic
+            // profile. ID and basic profile are included in DEFAULT_SIGN_IN.
+            GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                    .requestIdToken("724129164049-r7bo4g8l7b3d9n0fb2mqeak4tri0nojn.apps.googleusercontent.com")
+                    .requestScopes(new Scope(Scopes.PLUS_LOGIN))
+                    .requestScopes(new Scope(Scopes.PLUS_ME))
+                    .requestEmail()
+                    .build();
 
-        Intent signInIntent = Auth.GoogleSignInApi.getSignInIntent(mGoogleApiClient);
-        startActivityForResult(signInIntent, RC_SIGN_IN);
+            // Build a GoogleApiClient with access to the Google Sign-In API and the
+            // options specified by gso.
+            mGoogleApiClient = new GoogleApiClient.Builder(this)
+                    .enableAutoManage(this /* FragmentActivity */, this /* OnConnectionFailedListener */)
+                    .addApi(Auth.GOOGLE_SIGN_IN_API, gso)
+                    .build();
+
+            Intent signInIntent = Auth.GoogleSignInApi.getSignInIntent(mGoogleApiClient);
+            startActivityForResult(signInIntent, RC_SIGN_IN);
+        } else {
+            authenticateSuccessful();
+        }
     }
 
     @Override
