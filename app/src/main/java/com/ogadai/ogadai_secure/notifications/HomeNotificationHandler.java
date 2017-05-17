@@ -41,7 +41,7 @@ public class HomeNotificationHandler extends NotificationsHandler {
                         tags.add(hubId);
                         Installation installation = new Installation(null, null, gcmRegistrationId, null, tags, null);
                         System.out.println("registering notifications handler");
-                        getClient(fContext).getPush().register(installation);
+                        MainActivity.getClient().getPush().register(installation);
                         successful = true;
                     }
                 }
@@ -56,34 +56,27 @@ public class HomeNotificationHandler extends NotificationsHandler {
             }
         }.execute();
     }
-
-    @Override
-    public void onUnregistered(Context context, final String gcmRegistrationId) {
-        super.onUnregistered(context, gcmRegistrationId);
-        final Context fContext = context;
-
-        new AsyncTask<Void, Void, Void>() {
-
-            protected Void doInBackground(Void... params) {
-                try {
-                    System.out.println("unregistering notifications handler");
-                    getClient(fContext).getPush().unregister();
-                }
-                catch(Exception e) {
-                    // handle error
-                    System.out.println("Error unregistering notifications handler - " + e.getMessage());
-                    if (mFailCallback != null) mFailCallback.run();
-                }
-                return null;
-            }
-        }.execute();
-    }
-
-    private MobileServiceClient getClient(Context context) throws MalformedURLException {
-        return new MobileServiceClient(
-                ServerRequest.ROOTPATH,
-                context);
-    }
+//
+//    @Override
+//    public void onUnregistered(Context context, final String gcmRegistrationId) {
+//        super.onUnregistered(context, gcmRegistrationId);
+//
+//        new AsyncTask<Void, Void, Void>() {
+//
+//            protected Void doInBackground(Void... params) {
+//                try {
+//                    System.out.println("unregistering notifications handler");
+//                    MainActivity.getClient().getPush().unregister();
+//                }
+//                catch(Exception e) {
+//                    // handle error
+//                    System.out.println("Error unregistering notifications handler - " + e.getMessage());
+//                    if (mFailCallback != null) mFailCallback.run();
+//                }
+//                return null;
+//            }
+//        }.execute();
+//    }
 
     @Override
     public void onReceive(Context context, Bundle bundle) {

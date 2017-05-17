@@ -29,14 +29,26 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.Scopes;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.Scope;
+import com.microsoft.windowsazure.mobileservices.MobileServiceClient;
 import com.ogadai.ogadai_secure.auth.CachedToken;
 import com.ogadai.ogadai_secure.auth.TokenCache;
 import com.ogadai.ogadai_secure.notifications.ShowNotification;
+
+import java.net.MalformedURLException;
 
 public class MainActivity extends FragmentActivity
         implements NavigationDrawerFragment.NavigationDrawerCallbacks, IMainActivity,
                 GoogleApiClient.OnConnectionFailedListener {
     public static final String EXTRA_SHOWFRAGMENT = "com.ogadai.ogadai_secure.showCamera";
+
+    /**
+     * Mobile Service Client reference
+     */
+    private static MobileServiceClient mClient;
+
+    public static MobileServiceClient getClient() {
+        return mClient;
+    }
 
     private GoogleApiClient mGoogleApiClient;
     private MainContent mMainContent;
@@ -101,6 +113,15 @@ public class MainActivity extends FragmentActivity
     public void doAuthenticate(boolean update)
     {
         clearFragments();
+
+        // Mobile Service URL and key
+        try {
+            mClient = new MobileServiceClient(
+                    ServerRequest.ROOTPATH,
+                    this);
+        } catch (MalformedURLException e) {
+            System.out.println("MobileServiceClient was not successful - " + e.getMessage());
+        }
 
         boolean doAuth = update;
         if (!doAuth) {
