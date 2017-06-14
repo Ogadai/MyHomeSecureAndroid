@@ -1,14 +1,13 @@
 apply plugin: 'com.android.application'
-apply plugin: 'com.google.gms.google-services'
 
 android {
-    compileSdkVersion 25
+    compileSdkVersion 24
     buildToolsVersion '25.0.1'
 
     defaultConfig {
         applicationId "com.ogadai.ogadai_secure"
-        minSdkVersion 25
-        targetSdkVersion 25
+        minSdkVersion 24
+        targetSdkVersion 24
         versionCode 1
         versionName "1.0"
     }
@@ -52,9 +51,9 @@ dependencies {
     compile 'javax.websocket:javax.websocket-api:1.1'
     compile 'org.glassfish.tyrus:tyrus-client:1.12'
     compile 'org.glassfish.tyrus:tyrus-container-grizzly-client:1.12'
-    compile 'com.google.android.gms:play-services-location:9.0.0'
-    compile 'com.google.android.gms:play-services-gcm:9.0.0'
-    compile 'com.google.android.gms:play-services-auth:9.0.0'
+    compile 'com.google.android.gms:play-services-location:11.0.0'
+    compile 'com.google.android.gms:play-services-gcm:11.0.0'
+    compile 'com.google.android.gms:play-services-auth:11.0.0'
 }
 
 repositories {
@@ -62,3 +61,5 @@ repositories {
         url "http://dl.bintray.com/microsoftazuremobile/SDK"
     }
 }
+
+apply plugin: 'com.google.gms.google-services'

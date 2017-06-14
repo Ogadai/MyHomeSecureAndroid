@@ -161,9 +161,9 @@ public class CameraView extends View implements CameraFeed.Listener {
         if (mCameras == null) return;
 
         int cols = (int)Math.ceil(mCameras.size());
-        if (getWidth() < getHeight()) {
+//        if (getWidth() < getHeight()) {
             cols = Math.max(cols - 1, 1);
-        }
+//        }
 
         int rows = (int)Math.ceil((float)mCameras.size() / (float)cols);
         Rect contentRect = getContentRect();
