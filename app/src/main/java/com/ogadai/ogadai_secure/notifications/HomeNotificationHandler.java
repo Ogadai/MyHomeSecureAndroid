@@ -10,6 +10,7 @@ import com.microsoft.windowsazure.mobileservices.notifications.Installation;
 import com.microsoft.windowsazure.notifications.NotificationsHandler;
 import com.ogadai.ogadai_secure.MainActivity;
 import com.ogadai.ogadai_secure.ServerRequest;
+import com.ogadai.ogadai_secure.SettingsFragment;
 import com.ogadai.ogadai_secure.awaystatus.HubLocationMessage;
 
 import java.io.IOException;
@@ -39,7 +40,7 @@ public class HomeNotificationHandler extends NotificationsHandler {
                     if (hubId != null) {
                         List<String> tags = new ArrayList<String>();
                         tags.add(hubId);
-                        Installation installation = new Installation(null, null, gcmRegistrationId, null, tags, null);
+                        Installation installation = new Installation(SettingsFragment.NOTIFICATION_SENDER_ID, "android", gcmRegistrationId, null, tags, null);
                         System.out.println("registering notifications handler");
                         MainActivity.getClient().getPush().register(installation);
                         successful = true;
