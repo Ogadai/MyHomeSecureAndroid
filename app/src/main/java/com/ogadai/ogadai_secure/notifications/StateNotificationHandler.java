@@ -36,8 +36,9 @@ public class StateNotificationHandler {
 
         int notificationId = getId(message);
         if (message.isActive()) {
-            String messageNode = message.getNode().toLowerCase();
+            String messageNode = message.getNode();
             if (messageNode != null && messageNode.length() > 0) {
+                messageNode = messageNode.toLowerCase();
                 mLastNode = messageNode;
             }
             mLastState = message.getState();
@@ -107,16 +108,16 @@ public class StateNotificationHandler {
     }
 
     private String getTitle(NotifyMessageState message) {
-        return message.getState() != "Away"
+        return alarmState(message)
                 ? message.getState() + " has been activated!"
                 : message.getState() + " mode is active";
     }
 
     private int getId(NotifyMessageState message) { return alarmState(message) ? ShowNotification.STATEID : ShowNotification.AWAYSTATUSID; }
     private boolean useSound(NotifyMessageState message) {
-        return message.getState() == "Alarm";
+        return message.getState().equalsIgnoreCase("Alarm");
     }
     private boolean alarmState(NotifyMessageState message) {
-        return message.getState() != "Away";
+        return !message.getState().equalsIgnoreCase("Away");
     }
 }
