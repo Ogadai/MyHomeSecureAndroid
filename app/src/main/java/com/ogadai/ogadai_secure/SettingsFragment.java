@@ -12,6 +12,7 @@ import com.microsoft.windowsazure.notifications.NotificationsManager;
 import com.ogadai.ogadai_secure.awaystatus.EnterExitSetup;
 import com.ogadai.ogadai_secure.awaystatus.IEnterExitSetup;
 import com.ogadai.ogadai_secure.notifications.HomeNotificationHandler;
+import com.ogadai.ogadai_secure.notifications.HubMessagingService;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -98,7 +99,7 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
     }
 
     private void setNotificationsEnabled(final boolean notificationsEnabled) {
-        HomeNotificationHandler.setFailCallback(new Runnable() {
+        HubMessagingService.setFailCallback(new Runnable() {
             @Override
             public void run() {
                 SharedPreferences preferences = getPreferenceScreen().getSharedPreferences();
@@ -110,11 +111,13 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
         });
 
         if (notificationsEnabled) {
-            NotificationsManager.handleNotifications(mActivity,
-                    NOTIFICATION_SENDER_ID,
-                    HomeNotificationHandler.class);
+            HubMessagingService.register(mActivity);
+//            NotificationsManager.handleNotifications(mActivity,
+//                    NOTIFICATION_SENDER_ID,
+//                    HomeNotificationHandler.class);
         } else {
-            NotificationsManager.stopHandlingNotifications(mActivity);
+            HubMessagingService.unregister(mActivity);
+//            NotificationsManager.stopHandlingNotifications(mActivity);
         }
     }
 }

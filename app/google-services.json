@@ -1,7 +1,9 @@
 {
   "project_info": {
     "project_number": "724129164049",
-    "project_id": "ogadai-secure"
+    "firebase_url": "https://ogadai-secure.firebaseio.com",
+    "project_id": "ogadai-secure",
+    "storage_bucket": "ogadai-secure.appspot.com"
   },
   "client": [
     {
@@ -13,12 +15,32 @@
       },
       "oauth_client": [
         {
+          "client_id": "724129164049-pjo5irok6i8189pc0g2fsfn0k3oc0q1i.apps.googleusercontent.com",
+          "client_type": 3
+        },
+        {
+          "client_id": "724129164049-2aipcovgeib62h39aandtisome76ro7b.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.ogadai.ogadai_secure",
+            "certificate_hash": "bc01ba6c79b5bd4b09b17434b44142095ba1a020"
+          }
+        },
+        {
           "client_id": "724129164049-6h5tdq1i164srt8hv8d4iint9k9osgmd.apps.googleusercontent.com",
           "client_type": 3
         },
         {
           "client_id": "724129164049-r7bo4g8l7b3d9n0fb2mqeak4tri0nojn.apps.googleusercontent.com",
           "client_type": 3
+        },
+        {
+          "client_id": "724129164049-erupu54l86hr5bfarp4f49q0pf82sths.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.ogadai.ogadai_secure",
+            "certificate_hash": "b6b9c1171acc31022487129b7708cbb2ee0a8913"
+          }
         }
       ],
       "api_key": [
@@ -31,11 +53,16 @@
           "status": 1
         },
         "appinvite_service": {
-          "status": 1,
-          "other_platform_oauth_client": []
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "724129164049-pjo5irok6i8189pc0g2fsfn0k3oc0q1i.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         },
         "ads_service": {
-          "status": 1
+          "status": 2
         }
       }
     }

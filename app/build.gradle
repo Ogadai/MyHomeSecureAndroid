@@ -51,9 +51,10 @@ dependencies {
     compile 'javax.websocket:javax.websocket-api:1.1'
     compile 'org.glassfish.tyrus:tyrus-client:1.12'
     compile 'org.glassfish.tyrus:tyrus-container-grizzly-client:1.12'
-    compile 'com.google.android.gms:play-services-location:11.0.0'
-    compile 'com.google.android.gms:play-services-gcm:11.0.0'
-    compile 'com.google.android.gms:play-services-auth:11.0.0'
+    compile 'com.google.android.gms:play-services-location:11.0.1'
+    compile 'com.google.android.gms:play-services-gcm:11.0.1'
+    compile 'com.google.android.gms:play-services-auth:11.0.1'
+    compile 'com.google.firebase:firebase-messaging:11.0.1'
 }
 
 repositories {
