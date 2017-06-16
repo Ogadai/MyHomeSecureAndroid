@@ -8,10 +8,8 @@ import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.preference.PreferenceFragment;
 
-import com.microsoft.windowsazure.notifications.NotificationsManager;
 import com.ogadai.ogadai_secure.awaystatus.EnterExitSetup;
 import com.ogadai.ogadai_secure.awaystatus.IEnterExitSetup;
-import com.ogadai.ogadai_secure.notifications.HomeNotificationHandler;
 import com.ogadai.ogadai_secure.notifications.HubMessagingService;
 
 /**
@@ -112,12 +110,8 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
 
         if (notificationsEnabled) {
             HubMessagingService.register(mActivity);
-//            NotificationsManager.handleNotifications(mActivity,
-//                    NOTIFICATION_SENDER_ID,
-//                    HomeNotificationHandler.class);
         } else {
             HubMessagingService.unregister(mActivity);
-//            NotificationsManager.stopHandlingNotifications(mActivity);
         }
     }
 }
