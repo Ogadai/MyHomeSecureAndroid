@@ -99,11 +99,14 @@ public class ManageAwayStatus extends ConnectivityManager.NetworkCallback implem
                 }
             };
             task.execute();
-        } else if (mNetworkRequest == null) {
-            Log.i(TAG, "Not connected so requesting network for status : " + status.getAction());
-            requestNetwork();
         } else {
-            Log.i(TAG, "Not connected so delaying submitting status : " + status.getAction());
+            if (mNetworkRequest == null) {
+                Log.i(TAG, "Not connected so requesting network for status : " + status.getAction());
+                requestNetwork();
+            } else {
+                Log.i(TAG, "Not connected so delaying submitting status : " + status.getAction());
+            }
+
             retryUpToMaxAttempts(status);
         }
     }
