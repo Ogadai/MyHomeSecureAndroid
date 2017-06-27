@@ -4,12 +4,14 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
+import android.util.Log;
 
 import com.ogadai.ogadai_secure.CameraFeed;
 import com.ogadai.ogadai_secure.ServerRequest;
 import com.ogadai.ogadai_secure.awaystatus.AwayStatusUpdate;
 import com.ogadai.ogadai_secure.awaystatus.CheckIfHomeCallback;
 import com.ogadai.ogadai_secure.awaystatus.GeofenceSetup;
+import com.ogadai.ogadai_secure.awaystatus.IAwayStatusUpdate;
 import com.ogadai.ogadai_secure.awaystatus.ManageAwayStatus;
 
 import java.net.HttpURLConnection;
@@ -27,11 +29,13 @@ public class StateNotificationHandler {
     private static Bitmap mLastSnapshot = null;
     private static String mLastNode = null;
 
+    private static final String TAG = "StateNotification";
+
     public StateNotificationHandler(Context context) {
         mContext = context;
     }
     public void received(final NotifyMessageState message) {
-        System.out.println("state notification received - " + message.getState());
+        Log.i(TAG, "state notification received - " + message.getState());
         ShowNotification notify = new ShowNotification(mContext);
 
         int notificationId = getId(message);
@@ -62,15 +66,26 @@ public class StateNotificationHandler {
         geofence.checkIfHome(new CheckIfHomeCallback() {
             @Override
             public void OnUserIsHome() {
-                AwayStatusUpdate statusUpdate = new AwayStatusUpdate(mContext);
                 try {
-                    statusUpdate.updateStatus(ManageAwayStatus.ENTERED_EVENT);
+                    AsyncTask<String, Void, Void> task = new AsyncTask<String, Void, Void>() {
+                        @Override
+                        protected Void doInBackground(String... urls) {
+                            try {
+                                AwayStatusUpdate statusUpdate = new AwayStatusUpdate(mContext);
+                                statusUpdate.updateStatus(ManageAwayStatus.ENTERED_EVENT);
+                            } catch (Exception e) {
+                                Log.e(TAG, "Error setting away status - " + e.toString());
+                            }
+                            return null;
+                        }
+                    };
+                    task.execute();
 
                     // Clear the notification if home
                     ShowNotification notify = new ShowNotification(mContext);
                     notify.clear();
                 } catch (Exception e) {
-                    System.out.println("error updating status to entered - " + e.toString());
+                    Log.e(TAG, "error updating status to entered - " + e.toString());
                 }
 
             }
@@ -83,7 +98,7 @@ public class StateNotificationHandler {
                 int index = mRandGen.nextInt(10000);
                 try {
                     // Get a new snapshot image
-                    System.out.println("getting snapshot for notification");
+                    Log.i(TAG, "getting snapshot for notification");
                     HttpURLConnection urlConnection = ServerRequest.setupConnectionWithAuth(mContext, "GET",
                             "camerasnapshot?node=" + mLastNode + "&thumbnail=true&i=" + Integer.toString(index), null);
                     Bitmap snapshot = BitmapFactory.decodeStream(urlConnection.getInputStream());
@@ -93,13 +108,13 @@ public class StateNotificationHandler {
 
                     if (message.getState() == mLastState) {
                         // Update the notification
-                        System.out.println("updating notification with snapshot");
+                        Log.i(TAG, "updating notification with snapshot");
 
                         ShowNotification notify = new ShowNotification(mContext);
                         notify.show(message.getState(), getTitle(message), ShowNotification.STATEID, snapshot, true, useSound(message));
                     }
                 } catch (Exception e) {
-                    System.out.println("error getting notification snapshot - " + e.toString());
+                    Log.e(TAG, "error getting notification snapshot - " + e.toString());
                 }
                 return null;
             }

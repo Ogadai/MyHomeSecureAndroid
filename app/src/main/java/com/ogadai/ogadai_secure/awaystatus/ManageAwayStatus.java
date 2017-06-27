@@ -3,8 +3,12 @@ package com.ogadai.ogadai_secure.awaystatus;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
+import android.net.Network;
+import android.net.NetworkCapabilities;
 import android.net.NetworkInfo;
+import android.net.NetworkRequest;
 import android.os.AsyncTask;
+import android.util.Log;
 
 import com.ogadai.ogadai_secure.notifications.ShowNotification;
 
@@ -19,11 +23,14 @@ import java.util.concurrent.TimeUnit;
 /**
  * Created by alee on 22/02/2016.
  */
-public class ManageAwayStatus implements IManageAwayStatus {
+public class ManageAwayStatus extends ConnectivityManager.NetworkCallback implements IManageAwayStatus {
     public final static String EXITED_EVENT = "exited";
     public final static String ENTERED_EVENT = "entered";
 
     private Context mContext;
+    private ConnectivityManager mConnectivityManager;
+
+    private NetworkRequest mNetworkRequest;
 
     private static final String PREFFILE = "pending_status";
     private static final String ACTIONPREF = "action";
@@ -37,8 +44,12 @@ public class ManageAwayStatus implements IManageAwayStatus {
             Executors.newScheduledThreadPool(1);
     private static ScheduledFuture mTimerHandle = null;
 
+    private static final String TAG = "ManageAwayStatus";
+
     public ManageAwayStatus(Context context) {
         mContext = context;
+        mConnectivityManager = (ConnectivityManager)mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
+
     }
 
     public static ScheduledExecutorService getScheduler() {
@@ -67,10 +78,7 @@ public class ManageAwayStatus implements IManageAwayStatus {
     }
 
     private boolean isConnected() {
-        ConnectivityManager cm =
-                (ConnectivityManager)mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
-
-        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+        NetworkInfo activeNetwork = mConnectivityManager.getActiveNetworkInfo();
         return activeNetwork != null &&
                 activeNetwork.isConnectedOrConnecting();
     }
@@ -82,7 +90,7 @@ public class ManageAwayStatus implements IManageAwayStatus {
         }
 
         if (isConnected()) {
-            System.out.println("Connected and about to try submitting status : " + status.getAction());
+            Log.i(TAG, "Connected and about to try submitting status : " + status.getAction());
             AsyncTask<String, Void, Void> task = new AsyncTask<String, Void, Void>() {
                 @Override
                 protected Void doInBackground(String... urls) {
@@ -91,38 +99,62 @@ public class ManageAwayStatus implements IManageAwayStatus {
                 }
             };
             task.execute();
+        } else if (mNetworkRequest == null) {
+            Log.i(TAG, "Not connected so requesting network for status : " + status.getAction());
+            requestNetwork();
         } else {
-            System.out.println("Not connected so delaying submitting status : " + status.getAction());
+            Log.i(TAG, "Not connected so delaying submitting status : " + status.getAction());
+            retryUpToMaxAttempts(status);
         }
+    }
+
+    private void requestNetwork() {
+        mNetworkRequest = new NetworkRequest.Builder()
+                .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+                .build();
+
+        mConnectivityManager.requestNetwork(mNetworkRequest, this);
+    }
+
+    @Override
+    public void onAvailable(Network network) {
+        Log.i(TAG, "Network available, so retrying pending request");
+        retryPending();
     }
 
     private void trySubmit(final PendingStatus status) {
         try {
             postStatus(status.getAction());
             clear();
-            System.out.println("Successfully updated away status with action : " + status.getAction());
+            Log.i(TAG, "Successfully updated away status with action : " + status.getAction());
         }
         catch(Exception e) {
-            System.out.println("Failed to updated away status with action : " + status.getAction() + " - " + e.getMessage());
-            status.setAttempts(status.getAttempts() + 1);
+            Log.e(TAG, "Failed to updated away status with action : " + status.getAction() + " - " + e.getMessage());
+            retryUpToMaxAttempts(status);
+        }
+    }
 
-            if (status.getAttempts() >= MAXATTEMPTS) {
-                System.out.println("Exceeded maximum attempts to update status");
+    private void retryUpToMaxAttempts(final PendingStatus status) {
+        status.setAttempts(status.getAttempts() + 1);
 
-                ShowNotification test = new ShowNotification(mContext);
-                test.show("Failed to update Away Status", "Tried '" + status.getAction() + "' " + MAXATTEMPTS + " times");
-            } else {
-                int retries = MAXATTEMPTS - status.getAttempts();
-                System.out.println("Will attempt to update status " + retries + " more time" + (retries == 1 ? "" : "s"));
-                set(status);
+        if (status.getAttempts() >= MAXATTEMPTS) {
+            Log.e(TAG, "Exceeded maximum attempts to update status");
+            clear();
 
-                // Retry after delay
-                trySubmitAfterDelay(RETRYDELAYSECONDS);
-            }
+            ShowNotification test = new ShowNotification(mContext);
+            test.show("Failed to update Away Status", "Tried '" + status.getAction() + "' " + MAXATTEMPTS + " times");
+        } else {
+            int retries = MAXATTEMPTS - status.getAttempts();
+            Log.i(TAG, "Will attempt to update status " + retries + " more time" + (retries == 1 ? "" : "s"));
+
+            // Retry after delay
+            trySubmitAfterDelay(RETRYDELAYSECONDS);
         }
     }
 
     private void trySubmitAfterDelay(int delaySeconds) {
+        Log.i(TAG, "Submitting status after delay");
+
         mTimerHandle = mScheduler.schedule(new Runnable() {
             @Override
             public void run() {
@@ -166,6 +198,11 @@ public class ManageAwayStatus implements IManageAwayStatus {
         editor.remove(ACTIONPREF);
         editor.remove(ATTEMPTSPREF);
         editor.commit();
+
+        if (mNetworkRequest != null) {
+            mConnectivityManager.unregisterNetworkCallback(this);
+            mNetworkRequest = null;
+        }
     }
 
     private class PendingStatus {

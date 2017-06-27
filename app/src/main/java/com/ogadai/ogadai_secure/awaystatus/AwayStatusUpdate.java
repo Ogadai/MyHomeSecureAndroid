@@ -19,18 +19,20 @@ import java.io.IOException;
  */
 public class AwayStatusUpdate implements IAwayStatusUpdate {
     private Context mContext;
+    private static final String TAG = "AwayStatusUpdate";
+
     public AwayStatusUpdate(Context context) {
         mContext = context;
     }
 
     @Override
     public void updateStatus(String action) throws IOException, AuthenticationException {
-        System.out.println("updating status transition - " + action);
+        Log.i(TAG, "updating status transition - " + action);
 
         ITokenCache tokenCache = new TokenCache(mContext, TokenCache.AWAYSTATUS_PREFFILE);
         CachedToken cachedToken = tokenCache.get();
         if (cachedToken == null) {
-            Log.e("geofence", "No awaystatus token available");
+            Log.e(TAG, "No awaystatus token available");
             return;
         }
 

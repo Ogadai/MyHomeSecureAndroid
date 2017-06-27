@@ -7,6 +7,7 @@ import android.content.SharedPreferences;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.util.Log;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -41,6 +42,8 @@ public class GeofenceSetup implements GoogleApiClient.OnConnectionFailedListener
     private static final String LONGITUDEPREF = "longitude";
     private static final String RADIUSPREF = "radius";
 
+    private static final String TAG = "GeofenceSetup";
+
     public GeofenceSetup(Context context) {
         mContext = context;
     }
@@ -56,19 +59,19 @@ public class GeofenceSetup implements GoogleApiClient.OnConnectionFailedListener
     }
 
     public void setup() {
-        System.out.println("Setting up geofence");
+        Log.i(TAG, "Setting up geofence");
         getGeogencingClient();
         addGeofence();
     }
 
     public void remove() {
-        System.out.println("Uninstalling geofence");
+        Log.i(TAG, "Uninstalling geofence");
         getGeogencingClient();
         removeGeofence();
     }
 
     public void checkIfHome(final CheckIfHomeCallback callback) {
-        System.out.println("Checking if user is home");
+        Log.i(TAG, "Checking if user is home");
         doGoogleApiClientSetup(new Runnable() {
             @Override
             public void run() {
@@ -86,7 +89,7 @@ public class GeofenceSetup implements GoogleApiClient.OnConnectionFailedListener
                 .addConnectionCallbacks(new GoogleApiClient.ConnectionCallbacks() {
                     @Override
                     public void onConnected(Bundle bundle) {
-                        System.out.println("GoogleApiClient connected");
+                        Log.i(TAG, "GoogleApiClient connected");
 
                         callback.run();
                     }
@@ -111,20 +114,20 @@ public class GeofenceSetup implements GoogleApiClient.OnConnectionFailedListener
     }
 
     private void addGeofence() {
-        System.out.println("Adding geofence");
+        Log.i(TAG, "Adding geofence");
 
         try {
             mGeofencingClient.addGeofences(getGeofencingRequest(), getGeofencePendingIntent())
                     .addOnSuccessListener(new OnSuccessListener<Void>() {
                         @Override
                         public void onSuccess(Void aVoid) {
-                            System.out.println("Setting up geofence result - successful");
+                            Log.i(TAG, "Setting up geofence result - successful");
                         }
                     })
                     .addOnFailureListener(new OnFailureListener() {
                         @Override
                         public void onFailure(@NonNull Exception e) {
-                            System.out.println("Setting up geofence result - failed: " + e.getMessage());
+                            Log.e(TAG, "Setting up geofence result - failed: " + e.getMessage());
                         }
                     });
 
@@ -140,28 +143,28 @@ public class GeofenceSetup implements GoogleApiClient.OnConnectionFailedListener
 //                }
 //            });
         } catch(SecurityException sec) {
-            System.out.println("Security exception setting up geofence - " + sec.toString());
+            Log.e(TAG, "Security exception setting up geofence - " + sec.toString());
         } catch(Exception e) {
-            System.out.println("Error setting up geofence - " + e.toString());
+            Log.e(TAG, "Error setting up geofence - " + e.toString());
         }
 
     }
 
     private void removeGeofence() {
-        System.out.println("Removing geofence");
+        Log.i(TAG, "Removing geofence");
 
         try {
             mGeofencingClient.removeGeofences(getGeofencePendingIntent())
                     .addOnSuccessListener(new OnSuccessListener<Void>() {
                         @Override
                         public void onSuccess(Void aVoid) {
-                            System.out.println("Remove geofence result - successful");
+                            Log.i(TAG, "Remove geofence result - successful");
                         }
                     })
                     .addOnFailureListener(new OnFailureListener() {
                         @Override
                         public void onFailure(@NonNull Exception e) {
-                            System.out.println("Remove geofence result - failed: " + e.getMessage());
+                            Log.e(TAG, "Remove geofence result - failed: " + e.getMessage());
                         }
                     });
 
@@ -176,7 +179,7 @@ public class GeofenceSetup implements GoogleApiClient.OnConnectionFailedListener
 //                }
 //            });
         } catch(Exception e) {
-            System.out.println("Error removing geofence - " + e.toString());
+            Log.e(TAG, "Error removing geofence - " + e.toString());
         }
 
     }
@@ -197,7 +200,7 @@ public class GeofenceSetup implements GoogleApiClient.OnConnectionFailedListener
 
     private GeofencingRequest getGeofencingRequest() {
         GeofencingRequest.Builder builder = new GeofencingRequest.Builder();
-        builder.setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER);
+        builder.setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_EXIT | GeofencingRequest.INITIAL_TRIGGER_ENTER);
         builder.addGeofence(getGeoFence());
         return builder.build();
     }
@@ -208,17 +211,17 @@ public class GeofenceSetup implements GoogleApiClient.OnConnectionFailedListener
         if (mGeofencePendingIntent != null) {
             return mGeofencePendingIntent;
         }
-        Intent intent = new Intent(mContext, GeofenceReceiver.class);
+        Intent intent = new Intent(mContext, GeofenceIntentService.class);
         // We use FLAG_UPDATE_CURRENT so that we get the same pending intent back when
         // calling addGeofences() and removeGeofences().
-        mGeofencePendingIntent = PendingIntent.getBroadcast(mContext, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-
+//        mGeofencePendingIntent = PendingIntent.getBroadcast(mContext, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        mGeofencePendingIntent = PendingIntent.getService(mContext, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
         return mGeofencePendingIntent;
     }
 
     @Override
     public void onConnectionFailed(ConnectionResult connectionResult) {
-        System.out.println("GoogleApiClient connection failed - " + connectionResult.getErrorMessage());
+        Log.e(TAG, "GoogleApiClient connection failed - " + connectionResult.getErrorMessage());
     }
 
     private void checkIfUserHome(final CheckIfHomeCallback callback) {
@@ -232,11 +235,11 @@ public class GeofenceSetup implements GoogleApiClient.OnConnectionFailedListener
             final LocationListener listener = new LocationListener() {
                 @Override
                 public void onLocationChanged(Location location) {
-                    System.out.println("Location update - lat: " + location.getLatitude() + ", lng: " + location.getLongitude());
+                    Log.i(TAG, "Location update - lat: " + location.getLatitude() + ", lng: " + location.getLongitude());
 
                     float distance = location.distanceTo(homeLocation);
                     if (distance < radius) {
-                        System.out.println("Stopping location updates - user is home");
+                        Log.i(TAG, "Stopping location updates - user is home");
                         LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
                         disconnectGoogleApiClient();
 
@@ -246,7 +249,7 @@ public class GeofenceSetup implements GoogleApiClient.OnConnectionFailedListener
                 }
             };
 
-            System.out.println("Requesting location updates");
+            Log.i(TAG, "Requesting location updates");
             LocationRequest locationRequest = new LocationRequest();
             locationRequest.setInterval(5000);
             locationRequest.setFastestInterval(2000);
@@ -258,9 +261,11 @@ public class GeofenceSetup implements GoogleApiClient.OnConnectionFailedListener
             ManageAwayStatus.getScheduler().schedule(new Runnable() {
                 @Override
                 public void run() {
-                    System.out.println("Stopping location updates - user not home");
-                    LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, listener);
-                    disconnectGoogleApiClient();
+                    if (mGoogleApiClient != null) {
+                        Log.i(TAG, "Stopping location updates - user not home");
+                        LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, listener);
+                        disconnectGoogleApiClient();
+                    }
                 }
             }, 30, TimeUnit.SECONDS);
 

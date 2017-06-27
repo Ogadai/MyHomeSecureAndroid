@@ -20,6 +20,8 @@ public class EnterExitSetup implements IEnterExitSetup {
     private Context mContext;
     private GeofenceSetup mGeofenceSetup;
 
+    private static final String TAG = "EnterExitSetup";
+
     public EnterExitSetup(Context context) {
         mContext = context;
         mGeofenceSetup = new GeofenceSetup(context);
@@ -35,8 +37,8 @@ public class EnterExitSetup implements IEnterExitSetup {
     public void remove() {
         mGeofenceSetup.remove();
 
-        System.out.println("Removing daily alarm");
-        AlarmReceiver.cancelAlarm(mContext);
+//        Log.e(TAG, "Removing daily alarm");
+//        AlarmReceiver.cancelAlarm(mContext);
     }
 
     private void requestNewTokenOnThread(final Runnable failCallback) {
@@ -54,7 +56,7 @@ public class EnterExitSetup implements IEnterExitSetup {
     }
 
     private void requestNewToken(Runnable failCallback) {
-        System.out.println("requesting new token");
+        Log.i(TAG, "requesting new token");
 
         try {
             AwayStatusMessage tokenMessage = ServerRequest.post(mContext, "setuptoken", AwayStatusMessage.class);
@@ -62,9 +64,9 @@ public class EnterExitSetup implements IEnterExitSetup {
             ITokenCache awayStatusToken = new TokenCache(mContext, TokenCache.AWAYSTATUS_PREFFILE);
             awayStatusToken.set(new CachedToken(tokenMessage.getUserName(), tokenMessage.getToken()));
 
-            System.out.println("Updated token for user - " + tokenMessage.getUserName());
+            Log.i(TAG, "Updated token for user - " + tokenMessage.getUserName());
         } catch (Exception e) {
-            System.out.println("Error posting away status - " + e.toString());
+            Log.e(TAG, "Error posting away status - " + e.toString());
             failCallback.run();
 
             ShowNotification test = new ShowNotification(mContext);
@@ -93,10 +95,10 @@ public class EnterExitSetup implements IEnterExitSetup {
             mGeofenceSetup.setLocation(location.getLatitude(), location.getLongitude(), location.getRadius());
             mGeofenceSetup.setup();
 
-            System.out.println("Setting up daily alarm");
-            AlarmReceiver.setupDailyAlarm(mContext);
+//            Log.i(TAG, "Setting up daily alarm");
+//            AlarmReceiver.setupDailyAlarm(mContext);
         } catch (Exception e) {
-            System.out.println("Error getting hub location - " + e.toString());
+            Log.e(TAG, "Error getting hub location - " + e.toString());
             failCallback.run();
 
             ShowNotification test = new ShowNotification(mContext);
