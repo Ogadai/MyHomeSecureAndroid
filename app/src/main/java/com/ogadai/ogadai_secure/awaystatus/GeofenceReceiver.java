@@ -7,6 +7,7 @@ import android.util.Log;
 
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.GeofencingEvent;
+import com.ogadai.ogadai_secure.Logger;
 import com.ogadai.ogadai_secure.R;
 import com.ogadai.ogadai_secure.notifications.ShowNotification;
 
@@ -16,7 +17,7 @@ public class GeofenceReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        System.out.println("geofence broadcast event received");
+        Logger.i("geofence", "geofence broadcast event received");
         GeofencingEvent geofenceEvent = GeofencingEvent.fromIntent(intent);
         if (!geofenceEvent.hasError()) {
             int transition = geofenceEvent.getGeofenceTransition();
@@ -30,7 +31,7 @@ public class GeofenceReceiver extends BroadcastReceiver {
             }
         } else {
             // Log the error.
-            Log.e("geofence", "geofencing intent error - " + geofenceEvent.getErrorCode());
+            Logger.e("geofence", "geofencing intent error - " + geofenceEvent.getErrorCode());
             System.out.println("geofence intent error - " + geofenceEvent.getErrorCode());
         }
     }

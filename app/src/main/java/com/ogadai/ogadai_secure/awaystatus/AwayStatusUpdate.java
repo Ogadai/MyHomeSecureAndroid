@@ -5,6 +5,7 @@ import android.util.Log;
 
 import com.google.gson.Gson;
 import com.ogadai.ogadai_secure.IServerRequest;
+import com.ogadai.ogadai_secure.Logger;
 import com.ogadai.ogadai_secure.ServerRequest;
 import com.ogadai.ogadai_secure.auth.CachedToken;
 import com.ogadai.ogadai_secure.auth.ITokenCache;
@@ -27,12 +28,12 @@ public class AwayStatusUpdate implements IAwayStatusUpdate {
 
     @Override
     public void updateStatus(String action) throws IOException, AuthenticationException {
-        Log.i(TAG, "updating status transition - " + action);
+        Logger.i(TAG, "updating status transition - " + action);
 
         ITokenCache tokenCache = new TokenCache(mContext, TokenCache.AWAYSTATUS_PREFFILE);
         CachedToken cachedToken = tokenCache.get();
         if (cachedToken == null) {
-            Log.e(TAG, "No awaystatus token available");
+            Logger.e(TAG, "No awaystatus token available");
             return;
         }
 

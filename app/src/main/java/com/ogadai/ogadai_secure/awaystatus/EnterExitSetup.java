@@ -7,6 +7,7 @@ import android.util.Log;
 import com.google.gson.Gson;
 import com.ogadai.ogadai_secure.AlarmReceiver;
 import com.ogadai.ogadai_secure.IServerRequest;
+import com.ogadai.ogadai_secure.Logger;
 import com.ogadai.ogadai_secure.ServerRequest;
 import com.ogadai.ogadai_secure.notifications.ShowNotification;
 import com.ogadai.ogadai_secure.auth.CachedToken;
@@ -37,7 +38,7 @@ public class EnterExitSetup implements IEnterExitSetup {
     public void remove() {
         mGeofenceSetup.remove();
 
-//        Log.e(TAG, "Removing daily alarm");
+//        Logger.e(TAG, "Removing daily alarm");
 //        AlarmReceiver.cancelAlarm(mContext);
     }
 
@@ -56,7 +57,7 @@ public class EnterExitSetup implements IEnterExitSetup {
     }
 
     private void requestNewToken(Runnable failCallback) {
-        Log.i(TAG, "requesting new token");
+        Logger.i(TAG, "requesting new token");
 
         try {
             AwayStatusMessage tokenMessage = ServerRequest.post(mContext, "setuptoken", AwayStatusMessage.class);
@@ -64,9 +65,9 @@ public class EnterExitSetup implements IEnterExitSetup {
             ITokenCache awayStatusToken = new TokenCache(mContext, TokenCache.AWAYSTATUS_PREFFILE);
             awayStatusToken.set(new CachedToken(tokenMessage.getUserName(), tokenMessage.getToken()));
 
-            Log.i(TAG, "Updated token for user - " + tokenMessage.getUserName());
+            Logger.i(TAG, "Updated token for user - " + tokenMessage.getUserName());
         } catch (Exception e) {
-            Log.e(TAG, "Error posting away status - " + e.toString());
+            Logger.e(TAG, "Error posting away status - " + e.toString());
             failCallback.run();
 
             ShowNotification test = new ShowNotification(mContext);
@@ -95,10 +96,10 @@ public class EnterExitSetup implements IEnterExitSetup {
             mGeofenceSetup.setLocation(location.getLatitude(), location.getLongitude(), location.getRadius());
             mGeofenceSetup.setup();
 
-//            Log.i(TAG, "Setting up daily alarm");
+//            Logger.i(TAG, "Setting up daily alarm");
 //            AlarmReceiver.setupDailyAlarm(mContext);
         } catch (Exception e) {
-            Log.e(TAG, "Error getting hub location - " + e.toString());
+            Logger.e(TAG, "Error getting hub location - " + e.toString());
             failCallback.run();
 
             ShowNotification test = new ShowNotification(mContext);

@@ -17,13 +17,10 @@ public class BootCompletedReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(context);
         if (sharedPref.getBoolean(SettingsFragment.KEY_PREF_ENTEREXIT, false)) {
-            Log.i(TAG, "Boot action restoring geofence");
+            Logger.i(TAG, "Boot action restoring geofence");
             GeofenceSetup geoFence = new GeofenceSetup(context);
             geoFence.setup();
-
-//            Log.e(TAG, "Boot action restoring daily alarm");
-//            AlarmReceiver.setupDailyAlarm(context);
         }
-        Log.i(TAG, "Boot action completed");
+        Logger.i(TAG, "Boot action completed");
     }
 }

@@ -7,6 +7,7 @@ import android.util.Log;
 
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.GeofencingEvent;
+import com.ogadai.ogadai_secure.Logger;
 
 import java.util.List;
 
@@ -32,11 +33,11 @@ public class GeofenceIntentService extends IntentService {
                     || (transition == Geofence.GEOFENCE_TRANSITION_EXIT)) {
                 String awayStatus = transition == Geofence.GEOFENCE_TRANSITION_ENTER
                         ? ManageAwayStatus.ENTERED_EVENT : ManageAwayStatus.EXITED_EVENT;
-                Log.i(TAG, "geofence transition - " + awayStatus);
+                Logger.i(TAG, "geofence transition - " + awayStatus);
                 postEvent(this.getBaseContext(), awayStatus);
             }
         } else {
-            Log.e(TAG, "geofencing intent error - " + geofenceEvent.getErrorCode());
+            Logger.e(TAG, "geofencing intent error - " + geofenceEvent.getErrorCode());
         }
     }
 

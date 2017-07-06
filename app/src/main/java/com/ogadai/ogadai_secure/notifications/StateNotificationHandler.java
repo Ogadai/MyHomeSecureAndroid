@@ -7,6 +7,7 @@ import android.os.AsyncTask;
 import android.util.Log;
 
 import com.ogadai.ogadai_secure.CameraFeed;
+import com.ogadai.ogadai_secure.Logger;
 import com.ogadai.ogadai_secure.ServerRequest;
 import com.ogadai.ogadai_secure.awaystatus.AwayStatusUpdate;
 import com.ogadai.ogadai_secure.awaystatus.CheckIfHomeCallback;
@@ -35,7 +36,7 @@ public class StateNotificationHandler {
         mContext = context;
     }
     public void received(final NotifyMessageState message) {
-        Log.i(TAG, "state notification received - " + message.getState());
+        Logger.i(TAG, "state notification received - " + message.getState());
         ShowNotification notify = new ShowNotification(mContext);
 
         int notificationId = getId(message);
@@ -74,7 +75,7 @@ public class StateNotificationHandler {
                                 AwayStatusUpdate statusUpdate = new AwayStatusUpdate(mContext);
                                 statusUpdate.updateStatus(ManageAwayStatus.ENTERED_EVENT);
                             } catch (Exception e) {
-                                Log.e(TAG, "Error setting away status - " + e.toString());
+                                Logger.e(TAG, "Error setting away status - " + e.toString());
                             }
                             return null;
                         }
@@ -85,7 +86,7 @@ public class StateNotificationHandler {
                     ShowNotification notify = new ShowNotification(mContext);
                     notify.clear();
                 } catch (Exception e) {
-                    Log.e(TAG, "error updating status to entered - " + e.toString());
+                    Logger.e(TAG, "error updating status to entered - " + e.toString());
                 }
 
             }
@@ -98,7 +99,7 @@ public class StateNotificationHandler {
                 int index = mRandGen.nextInt(10000);
                 try {
                     // Get a new snapshot image
-                    Log.i(TAG, "getting snapshot for notification");
+                    Logger.i(TAG, "getting snapshot for notification");
                     HttpURLConnection urlConnection = ServerRequest.setupConnectionWithAuth(mContext, "GET",
                             "camerasnapshot?node=" + mLastNode + "&thumbnail=true&i=" + Integer.toString(index), null);
                     Bitmap snapshot = BitmapFactory.decodeStream(urlConnection.getInputStream());
@@ -108,13 +109,13 @@ public class StateNotificationHandler {
 
                     if (message.getState() == mLastState) {
                         // Update the notification
-                        Log.i(TAG, "updating notification with snapshot");
+                        Logger.i(TAG, "updating notification with snapshot");
 
                         ShowNotification notify = new ShowNotification(mContext);
                         notify.show(message.getState(), getTitle(message), ShowNotification.STATEID, snapshot, true, useSound(message));
                     }
                 } catch (Exception e) {
-                    Log.e(TAG, "error getting notification snapshot - " + e.toString());
+                    Logger.e(TAG, "error getting notification snapshot - " + e.toString());
                 }
                 return null;
             }

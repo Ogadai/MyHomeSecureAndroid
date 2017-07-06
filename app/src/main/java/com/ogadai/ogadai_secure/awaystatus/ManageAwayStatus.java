@@ -10,6 +10,7 @@ import android.net.NetworkRequest;
 import android.os.AsyncTask;
 import android.util.Log;
 
+import com.ogadai.ogadai_secure.Logger;
 import com.ogadai.ogadai_secure.notifications.ShowNotification;
 
 import org.glassfish.tyrus.client.auth.AuthenticationException;
@@ -90,7 +91,7 @@ public class ManageAwayStatus extends ConnectivityManager.NetworkCallback implem
         }
 
         if (isConnected()) {
-            Log.i(TAG, "Connected and about to try submitting status : " + status.getAction());
+            Logger.i(TAG, "Connected and about to try submitting status : " + status.getAction());
             AsyncTask<String, Void, Void> task = new AsyncTask<String, Void, Void>() {
                 @Override
                 protected Void doInBackground(String... urls) {
@@ -101,10 +102,10 @@ public class ManageAwayStatus extends ConnectivityManager.NetworkCallback implem
             task.execute();
         } else {
             if (mNetworkRequest == null) {
-                Log.i(TAG, "Not connected so requesting network for status : " + status.getAction());
+                Logger.i(TAG, "Not connected so requesting network for status : " + status.getAction());
                 requestNetwork();
             } else {
-                Log.i(TAG, "Not connected so delaying submitting status : " + status.getAction());
+                Logger.i(TAG, "Not connected so delaying submitting status : " + status.getAction());
             }
 
             retryUpToMaxAttempts(status);
@@ -121,7 +122,7 @@ public class ManageAwayStatus extends ConnectivityManager.NetworkCallback implem
 
     @Override
     public void onAvailable(Network network) {
-        Log.i(TAG, "Network available, so retrying pending request");
+        Logger.i(TAG, "Network available, so retrying pending request");
         retryPending();
     }
 
@@ -129,10 +130,10 @@ public class ManageAwayStatus extends ConnectivityManager.NetworkCallback implem
         try {
             postStatus(status.getAction());
             clear();
-            Log.i(TAG, "Successfully updated away status with action : " + status.getAction());
+            Logger.i(TAG, "Successfully updated away status with action : " + status.getAction());
         }
         catch(Exception e) {
-            Log.e(TAG, "Failed to updated away status with action : " + status.getAction() + " - " + e.getMessage());
+            Logger.e(TAG, "Failed to updated away status with action : " + status.getAction() + " - " + e.getMessage());
             retryUpToMaxAttempts(status);
         }
     }
@@ -141,14 +142,14 @@ public class ManageAwayStatus extends ConnectivityManager.NetworkCallback implem
         status.setAttempts(status.getAttempts() + 1);
 
         if (status.getAttempts() >= MAXATTEMPTS) {
-            Log.e(TAG, "Exceeded maximum attempts to update status");
+            Logger.e(TAG, "Exceeded maximum attempts to update status");
             clear();
 
             ShowNotification test = new ShowNotification(mContext);
             test.show("Failed to update Away Status", "Tried '" + status.getAction() + "' " + MAXATTEMPTS + " times");
         } else {
             int retries = MAXATTEMPTS - status.getAttempts();
-            Log.i(TAG, "Will attempt to update status " + retries + " more time" + (retries == 1 ? "" : "s"));
+            Logger.i(TAG, "Will attempt to update status " + retries + " more time" + (retries == 1 ? "" : "s"));
 
             // Retry after delay
             trySubmitAfterDelay(RETRYDELAYSECONDS);
@@ -156,7 +157,7 @@ public class ManageAwayStatus extends ConnectivityManager.NetworkCallback implem
     }
 
     private void trySubmitAfterDelay(int delaySeconds) {
-        Log.i(TAG, "Submitting status after delay");
+        Logger.i(TAG, "Submitting status after delay");
 
         mTimerHandle = mScheduler.schedule(new Runnable() {
             @Override

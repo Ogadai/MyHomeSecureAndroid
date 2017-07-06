@@ -21,7 +21,7 @@ public class HomeSecureSocket implements IHomeSecureSocket {
         mClient = client;
     }
 
-    public static String ROOTPATH = "wss://" + ServerRequest.HOSTNAME + "/";
+    public static String ROOTPATH = "wss://" + ServerRequest.HOSTNAME + "/"; // "ws://10.0.2.2:45738"
     public static String ROOTAPIPATH = ROOTPATH + "api/";
 
     @Override

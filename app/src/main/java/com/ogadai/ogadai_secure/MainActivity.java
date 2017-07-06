@@ -170,7 +170,7 @@ public class MainActivity extends FragmentActivity
 
     private Fragment[] mFragments;
     private void clearFragments() {
-        mFragments = new Fragment[4];
+        mFragments = new Fragment[5];
     }
 
     @Override
@@ -191,6 +191,9 @@ public class MainActivity extends FragmentActivity
                     break;
                 case 3:
                     newFragment = new SettingsFragment();
+                    break;
+                case 4:
+                    newFragment = new LoggerFragment();
                     break;
             }
             mFragments[position] = newFragment;

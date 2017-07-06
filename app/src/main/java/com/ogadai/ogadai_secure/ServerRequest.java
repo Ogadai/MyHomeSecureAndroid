@@ -100,7 +100,7 @@ public class ServerRequest implements IServerRequest {
         ITokenCache googleToken = new TokenCache(context, TokenCache.GOOGLE_PREFFILE);
         CachedToken cachedToken = googleToken.get();
         if (cachedToken == null) {
-            Log.e("geofence", "No cached token available");
+            Logger.e("geofence", "No cached token available");
         }
         return cachedToken.getToken();
     }
