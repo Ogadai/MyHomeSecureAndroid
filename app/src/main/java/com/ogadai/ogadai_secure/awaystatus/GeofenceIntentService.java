@@ -24,6 +24,7 @@ public class GeofenceIntentService extends IntentService {
     }
 
     protected void onHandleIntent(Intent intent) {
+        Logger.setContext(this);
         GeofencingEvent geofenceEvent = GeofencingEvent.fromIntent(intent);
         if (!geofenceEvent.hasError()) {
             int transition = geofenceEvent.getGeofenceTransition();

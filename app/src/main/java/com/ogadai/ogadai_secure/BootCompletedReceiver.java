@@ -15,6 +15,8 @@ public class BootCompletedReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
+        Logger.setContext(context);
+
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(context);
         if (sharedPref.getBoolean(SettingsFragment.KEY_PREF_ENTEREXIT, false)) {
             Logger.i(TAG, "Boot action restoring geofence");

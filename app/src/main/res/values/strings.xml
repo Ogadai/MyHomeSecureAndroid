@@ -18,6 +18,7 @@
     <string name="title_section2">History</string>
     <string name="title_section3">Camera</string>
     <string name="title_section4">Settings</string>
+    <string name="title_section5">Log</string>
 
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>

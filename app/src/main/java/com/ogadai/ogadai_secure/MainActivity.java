@@ -63,6 +63,7 @@ public class MainActivity extends FragmentActivity
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Logger.setContext(this);
         setContentView(R.layout.activity_main);
 
         mNavigationDrawerFragment = (NavigationDrawerFragment)
@@ -91,6 +92,12 @@ public class MainActivity extends FragmentActivity
         doAuthenticate(false);
 
         clearNotifications();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        Logger.setContext(this);
     }
 
     protected void onStart() {
@@ -223,6 +230,9 @@ public class MainActivity extends FragmentActivity
                 break;
             case 3:
                 mTitle = getString(R.string.title_section4);
+                break;
+            case 4:
+                mTitle = getString(R.string.title_section5);
                 break;
         }
         restoreActionBar();

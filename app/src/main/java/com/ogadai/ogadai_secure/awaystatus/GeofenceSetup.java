@@ -206,7 +206,6 @@ public class GeofenceSetup implements GoogleApiClient.OnConnectionFailedListener
         return builder.build();
     }
 
-
     private PendingIntent getGeofencePendingIntent() {
         // Reuse the PendingIntent if we already have it.
         if (mGeofencePendingIntent != null) {

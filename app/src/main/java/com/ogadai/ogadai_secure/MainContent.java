@@ -29,7 +29,6 @@ public class MainContent extends RelativeLayout
     }
     public MainContent(Context context, AttributeSet attrs) {
         super(context, attrs);
-        Logger.setContext(context);
 
         setOnClickListener(this);
         setOnSystemUiVisibilityChangeListener(this);
