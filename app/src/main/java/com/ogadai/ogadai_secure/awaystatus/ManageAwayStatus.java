@@ -70,11 +70,14 @@ public class ManageAwayStatus extends ConnectivityManager.NetworkCallback implem
         }
     }
 
-    @Override
     public void retryPending() {
+        retryPending(false);
+    }
+
+    public void retryPending(boolean forceTry) {
         PendingStatus status = get();
         if (status != null && status.getAction().length() > 0) {
-            trySubmitOnThread(status);
+            trySubmitOnThread(status, forceTry);
         }
     }
 
@@ -85,13 +88,21 @@ public class ManageAwayStatus extends ConnectivityManager.NetworkCallback implem
     }
 
     private void trySubmitOnThread(final PendingStatus status) {
+        trySubmitOnThread(status, false);
+    }
+    private void trySubmitOnThread(final PendingStatus status, boolean forceTry) {
         if (mTimerHandle != null) {
             mTimerHandle.cancel(false);
             mTimerHandle = null;
         }
 
-        if (isConnected()) {
-            Logger.i(TAG, "Connected and about to try submitting status : " + status.getAction());
+        boolean connected = isConnected();
+        if (forceTry || connected) {
+            String message = connected
+                            ? "Connected and about to try submitting status : "
+                            : "Not connected but attempting to submit status anyway : ";
+
+            Logger.i(TAG, message + status.getAction());
             AsyncTask<String, Void, Void> task = new AsyncTask<String, Void, Void>() {
                 @Override
                 protected Void doInBackground(String... urls) {
@@ -122,8 +133,8 @@ public class ManageAwayStatus extends ConnectivityManager.NetworkCallback implem
 
     @Override
     public void onAvailable(Network network) {
-        Logger.i(TAG, "Network available, so retrying pending request");
-        retryPending();
+        Logger.i(TAG, "Network available, so about to attempt request");
+        retryPending(true);
     }
 
     private void trySubmit(final PendingStatus status) {
