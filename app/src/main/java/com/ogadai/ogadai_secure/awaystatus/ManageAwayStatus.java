@@ -1,6 +1,9 @@
 package com.ogadai.ogadai_secure.awaystatus;
 
+import android.app.AlarmManager;
+import android.app.PendingIntent;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.Network;
@@ -8,6 +11,7 @@ import android.net.NetworkCapabilities;
 import android.net.NetworkInfo;
 import android.net.NetworkRequest;
 import android.os.AsyncTask;
+import android.os.SystemClock;
 import android.util.Log;
 
 import com.ogadai.ogadai_secure.Logger;
@@ -37,13 +41,14 @@ public class ManageAwayStatus extends ConnectivityManager.NetworkCallback implem
     private static final String ACTIONPREF = "action";
     private static final String ATTEMPTSPREF = "attempts";
 
-    private static final int MAXATTEMPTS = 5;
-    private static final int RETRYDELAYSECONDS = 30;
+    private static final int MAXATTEMPTS = 10;
+    private static final int RETRYDELAYSECONDS = 10;
     private static final int EXITDELAYSECONDS = 120;
 
     private static final ScheduledExecutorService mScheduler =
             Executors.newScheduledThreadPool(1);
-    private static ScheduledFuture mTimerHandle = null;
+    private AlarmManager mAlarmManager = null;
+    private PendingIntent mAlarmIntent = null;
 
     private static final String TAG = "ManageAwayStatus";
 
@@ -91,9 +96,9 @@ public class ManageAwayStatus extends ConnectivityManager.NetworkCallback implem
         trySubmitOnThread(status, false);
     }
     private void trySubmitOnThread(final PendingStatus status, boolean forceTry) {
-        if (mTimerHandle != null) {
-            mTimerHandle.cancel(false);
-            mTimerHandle = null;
+        if (mAlarmManager != null) {
+            mAlarmManager.cancel(mAlarmIntent);
+            mAlarmIntent = null;
         }
 
         boolean connected = isConnected();
@@ -151,6 +156,7 @@ public class ManageAwayStatus extends ConnectivityManager.NetworkCallback implem
 
     private void retryUpToMaxAttempts(final PendingStatus status) {
         status.setAttempts(status.getAttempts() + 1);
+        set(status);
 
         if (status.getAttempts() >= MAXATTEMPTS) {
             Logger.e(TAG, "Exceeded maximum attempts to update status");
@@ -170,13 +176,12 @@ public class ManageAwayStatus extends ConnectivityManager.NetworkCallback implem
     private void trySubmitAfterDelay(int delaySeconds) {
         Logger.i(TAG, "Submitting status after delay");
 
-        mTimerHandle = mScheduler.schedule(new Runnable() {
-            @Override
-            public void run() {
-                mTimerHandle = null;
-                retryPending();
-            }
-        }, delaySeconds, TimeUnit.SECONDS);
+        mAlarmManager = (AlarmManager)mContext.getSystemService(Context.ALARM_SERVICE);
+        Intent intent = new Intent(mContext, AwayStatusDelayReceiver.class);
+        mAlarmIntent = PendingIntent.getBroadcast(mContext, 0, intent, 0);
+
+        mAlarmManager.set(AlarmManager.ELAPSED_REALTIME_WAKEUP,
+                SystemClock.elapsedRealtime() + delaySeconds * 1000, mAlarmIntent);
     }
 
     private void postStatus(String action) throws IOException, AuthenticationException {

@@ -65,7 +65,11 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
         System.out.println("Enter/Exit events " + (enterExitEnabled ? "enabled" : "disabled"));
 
         if (enterExitEnabled) {
-            requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, FINE_LOCATION_REQUEST);
+            requestPermissions(new String[]{
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.CHANGE_NETWORK_STATE,
+                    Manifest.permission.WRITE_SETTINGS
+            }, FINE_LOCATION_REQUEST);
         } else {
             IEnterExitSetup enterExitSetup = new EnterExitSetup(mActivity);
             enterExitSetup.remove();

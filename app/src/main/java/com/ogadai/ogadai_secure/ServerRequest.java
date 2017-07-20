@@ -44,6 +44,7 @@ public class ServerRequest implements IServerRequest {
     public static String HOSTNAME = "ogadai-secure.azure-mobile.net"; // local "10.0.2.2:8080"
     public static String ROOTPATH = "https://" + HOSTNAME + "/";
     public static String ROOTAPIPATH = ROOTPATH + "api/";
+    public static int CONNECT_TIMEOUT_MS = 10000;
 
     public static String get(Context context, String path) throws IOException, AuthenticationException {
         return requestWithAuth(context, "GET", path, null);
@@ -183,6 +184,7 @@ public class ServerRequest implements IServerRequest {
                 urlConnection.setRequestProperty("charset", "utf-8");
                 urlConnection.setRequestProperty("Content-Length", Integer.toString(postData.length));
                 urlConnection.setUseCaches(false);
+                urlConnection.setConnectTimeout(CONNECT_TIMEOUT_MS);
                 urlConnection.connect();
 
                 DataOutputStream outStream = new DataOutputStream(urlConnection.getOutputStream());
