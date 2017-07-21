@@ -11,6 +11,7 @@ import android.net.NetworkCapabilities;
 import android.net.NetworkInfo;
 import android.net.NetworkRequest;
 import android.os.AsyncTask;
+import android.os.PowerManager;
 import android.os.SystemClock;
 import android.util.Log;
 
@@ -25,6 +26,8 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import static android.content.Context.POWER_SERVICE;
+
 /**
  * Created by alee on 22/02/2016.
  */
@@ -36,6 +39,9 @@ public class ManageAwayStatus extends ConnectivityManager.NetworkCallback implem
     private ConnectivityManager mConnectivityManager;
 
     private NetworkRequest mNetworkRequest;
+
+    private PowerManager mPowerManager;
+    private PowerManager.WakeLock mWakeLock;
 
     private static final String PREFFILE = "pending_status";
     private static final String ACTIONPREF = "action";
@@ -55,7 +61,7 @@ public class ManageAwayStatus extends ConnectivityManager.NetworkCallback implem
     public ManageAwayStatus(Context context) {
         mContext = context;
         mConnectivityManager = (ConnectivityManager)mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
-
+        mPowerManager = (PowerManager) mContext.getSystemService(POWER_SERVICE);
     }
 
     public static ScheduledExecutorService getScheduler() {
@@ -100,6 +106,7 @@ public class ManageAwayStatus extends ConnectivityManager.NetworkCallback implem
             mAlarmManager.cancel(mAlarmIntent);
             mAlarmIntent = null;
         }
+        acquireWakeLock();
 
         boolean connected = isConnected();
         if (forceTry || connected) {
@@ -182,6 +189,8 @@ public class ManageAwayStatus extends ConnectivityManager.NetworkCallback implem
 
         mAlarmManager.set(AlarmManager.ELAPSED_REALTIME_WAKEUP,
                 SystemClock.elapsedRealtime() + delaySeconds * 1000, mAlarmIntent);
+
+        releaseWakeLock();
     }
 
     private void postStatus(String action) throws IOException, AuthenticationException {
@@ -222,6 +231,20 @@ public class ManageAwayStatus extends ConnectivityManager.NetworkCallback implem
         if (mNetworkRequest != null) {
             mConnectivityManager.unregisterNetworkCallback(this);
             mNetworkRequest = null;
+        }
+        releaseWakeLock();
+    }
+
+    private void acquireWakeLock() {
+        if (mWakeLock == null) {
+            mWakeLock = mPowerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "HomeSecureWatcherLock");
+            mWakeLock.acquire();
+        }
+    }
+    private void releaseWakeLock() {
+        if (mWakeLock != null) {
+            mWakeLock.release();
+            mWakeLock = null;
         }
     }
 

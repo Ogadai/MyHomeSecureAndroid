@@ -68,7 +68,8 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
             requestPermissions(new String[]{
                     Manifest.permission.ACCESS_FINE_LOCATION,
                     Manifest.permission.CHANGE_NETWORK_STATE,
-                    Manifest.permission.WRITE_SETTINGS
+                    Manifest.permission.WRITE_SETTINGS,
+                    Manifest.permission.WAKE_LOCK
             }, FINE_LOCATION_REQUEST);
         } else {
             IEnterExitSetup enterExitSetup = new EnterExitSetup(mActivity);
