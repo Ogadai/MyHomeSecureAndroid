@@ -136,11 +136,13 @@ public class ManageAwayStatus extends ConnectivityManager.NetworkCallback implem
     }
 
     private void requestNetwork() {
-        mNetworkRequest = new NetworkRequest.Builder()
-                .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
-                .build();
+        if (mNetworkRequest == null) {
+            mNetworkRequest = new NetworkRequest.Builder()
+                    .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+                    .build();
 
-        mConnectivityManager.requestNetwork(mNetworkRequest, this);
+            mConnectivityManager.requestNetwork(mNetworkRequest, this);
+        }
     }
 
     @Override
