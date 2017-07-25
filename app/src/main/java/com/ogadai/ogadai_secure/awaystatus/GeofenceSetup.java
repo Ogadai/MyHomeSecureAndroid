@@ -45,6 +45,8 @@ public class GeofenceSetup implements GoogleApiClient.OnConnectionFailedListener
 
     private static final String TAG = "GeofenceSetup";
 
+    private static final ScheduledExecutorService mScheduler = Executors.newScheduledThreadPool(1);
+
     public GeofenceSetup(Context context) {
         mContext = context;
     }
@@ -258,7 +260,7 @@ public class GeofenceSetup implements GoogleApiClient.OnConnectionFailedListener
             LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, locationRequest, listener);
 
             // Stop updates after 30 seconds if not home
-            ManageAwayStatus.getScheduler().schedule(new Runnable() {
+            mScheduler.schedule(new Runnable() {
                 @Override
                 public void run() {
                     if (mGoogleApiClient != null) {

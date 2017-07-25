@@ -196,19 +196,7 @@ public class MonitorStatesFragment extends MainFragment implements IHomeSecureSo
     }
 
     private void ChangedAwayState(final String action) {
-        AsyncTask<String, Void, Void> task = new AsyncTask<String, Void, Void>() {
-            @Override
-            protected Void doInBackground(String... urls) {
-                try {
-                    IAwayStatusUpdate statusUpdate = new AwayStatusUpdate(getActivity());
-                    statusUpdate.updateStatus(action);
-                } catch (Exception e) {
-                    showError(e, "Setting away status");
-                }
-                return null;
-            }
-        };
-        task.execute(action);
+        ManageAwayStatus.setAwayStatus(getActivity(), action);
     }
 
     @Override

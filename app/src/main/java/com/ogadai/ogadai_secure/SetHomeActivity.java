@@ -45,17 +45,5 @@ public class SetHomeActivity extends Activity {
 
 
     private void actionSetToHome() {
-        final IAwayStatusUpdate statusUpdate = new AwayStatusUpdate(this);
-        AsyncTask<String, Void, Void> task = new AsyncTask<String, Void, Void>() {
-            @Override
-            protected Void doInBackground(String... urls) {
-                try {
-                    statusUpdate.updateStatus(ManageAwayStatus.ENTERED_EVENT);
-                } catch(Exception e) {
-                    System.out.println("error setting to home - " + e.getMessage());
-                }
-                return null;
-            }
-        };
-        task.execute();
+        ManageAwayStatus.setAwayStatus(this, ManageAwayStatus.ENTERED_EVENT);
     }}

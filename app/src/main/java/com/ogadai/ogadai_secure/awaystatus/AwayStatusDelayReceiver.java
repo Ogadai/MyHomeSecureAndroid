@@ -17,7 +17,6 @@ public class AwayStatusDelayReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         Logger.setContext(context);
 
-        ManageAwayStatus awayStatus = new ManageAwayStatus(context);
-        awayStatus.retryPending();
+        ManageAwayStatus.processStatus(context);
     }
 }

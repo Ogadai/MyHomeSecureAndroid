@@ -54,11 +54,11 @@
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
-        <receiver android:name=".ConnectivityReceiver">
-            <intent-filter>
-                <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
-            </intent-filter>
-        </receiver>
+        <!--<receiver android:name=".ConnectivityReceiver">-->
+            <!--<intent-filter>-->
+                <!--<action android:name="android.net.conn.CONNECTIVITY_CHANGE" />-->
+            <!--</intent-filter>-->
+        <!--</receiver>-->
         <receiver android:name=".awaystatus.AwayStatusDelayReceiver"></receiver>
         <!--<receiver android:name=".awaystatus.GeofenceReceiver" />-->
         <service android:name=".awaystatus.GeofenceIntentService"/>

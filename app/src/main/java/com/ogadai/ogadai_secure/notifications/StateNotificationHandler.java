@@ -68,19 +68,7 @@ public class StateNotificationHandler {
             @Override
             public void OnUserIsHome() {
                 try {
-                    AsyncTask<String, Void, Void> task = new AsyncTask<String, Void, Void>() {
-                        @Override
-                        protected Void doInBackground(String... urls) {
-                            try {
-                                AwayStatusUpdate statusUpdate = new AwayStatusUpdate(mContext);
-                                statusUpdate.updateStatus(ManageAwayStatus.ENTERED_EVENT);
-                            } catch (Exception e) {
-                                Logger.e(TAG, "Error setting away status - " + e.toString());
-                            }
-                            return null;
-                        }
-                    };
-                    task.execute();
+                    ManageAwayStatus.setAwayStatus(mContext, ManageAwayStatus.ENTERED_EVENT);
 
                     // Clear the notification if home
                     ShowNotification notify = new ShowNotification(mContext);

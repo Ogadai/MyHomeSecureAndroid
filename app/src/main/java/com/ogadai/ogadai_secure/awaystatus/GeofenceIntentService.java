@@ -43,7 +43,6 @@ public class GeofenceIntentService extends IntentService {
     }
 
     protected void postEvent(Context context, String eventName) {
-        IManageAwayStatus manageStatus = new ManageAwayStatus(context);
-        manageStatus.setAwayStatus(eventName);
+        ManageAwayStatus.setAwayStatus(context, eventName, true);
     }
 }

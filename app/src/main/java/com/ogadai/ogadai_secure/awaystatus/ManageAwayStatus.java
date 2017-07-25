@@ -13,125 +13,163 @@ import android.net.NetworkRequest;
 import android.os.AsyncTask;
 import android.os.PowerManager;
 import android.os.SystemClock;
-import android.util.Log;
 
 import com.ogadai.ogadai_secure.Logger;
 import com.ogadai.ogadai_secure.notifications.ShowNotification;
-
-import org.glassfish.tyrus.client.auth.AuthenticationException;
-
-import java.io.IOException;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
 
 import static android.content.Context.POWER_SERVICE;
 
 /**
  * Created by alee on 22/02/2016.
  */
-public class ManageAwayStatus extends ConnectivityManager.NetworkCallback implements IManageAwayStatus {
+public class ManageAwayStatus extends ConnectivityManager.NetworkCallback {
     public final static String EXITED_EVENT = "exited";
     public final static String ENTERED_EVENT = "entered";
 
     private Context mContext;
+
     private ConnectivityManager mConnectivityManager;
+    private PowerManager mPowerManager;
+    private AlarmManager mAlarmManager;
 
     private NetworkRequest mNetworkRequest;
-
-    private PowerManager mPowerManager;
     private PowerManager.WakeLock mWakeLock;
+    private PendingIntent mAlarmIntent;
 
-    private static final String PREFFILE = "pending_status";
-    private static final String ACTIONPREF = "action";
-    private static final String ATTEMPTSPREF = "attempts";
+    private static ManageAwayStatus _instance = new ManageAwayStatus();
 
-    private static final int MAXATTEMPTS = 10;
-    private static final int RETRYDELAYSECONDS = 10;
+    private static final int MAXATTEMPTS = 5;
+    private static final int RETRYDELAYSECONDS = 30;
     private static final int EXITDELAYSECONDS = 120;
-
-    private static final ScheduledExecutorService mScheduler =
-            Executors.newScheduledThreadPool(1);
-    private AlarmManager mAlarmManager = null;
-    private PendingIntent mAlarmIntent = null;
+    private static final int NETWORKDELAYSECONDS = 60;
 
     private static final String TAG = "ManageAwayStatus";
 
-    public ManageAwayStatus(Context context) {
+    public static void setAwayStatus(Context context, String action) {
+        setAwayStatus(context, action, false);
+    }
+
+    public static void setAwayStatus(Context context, String action, boolean transition) {
+        _instance.setContext(context);
+        _instance.setAwayStatus(action, transition);
+    }
+
+    public static void processStatus(Context context) {
+        _instance.setContext(context);
+        _instance.processStatus();
+    }
+
+    private ManageAwayStatus() {
+    }
+
+    private void setContext(Context context) {
         mContext = context;
         mConnectivityManager = (ConnectivityManager)mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
         mPowerManager = (PowerManager) mContext.getSystemService(POWER_SERVICE);
+        mAlarmManager = (AlarmManager)mContext.getSystemService(Context.ALARM_SERVICE);
     }
 
-    public static ScheduledExecutorService getScheduler() {
-        return mScheduler;
-    }
+    private synchronized void setAwayStatus(String action, boolean transition) {
+        try {
+            clear();
+            set(new PendingStatus(action, 0, transition ? PendingStage.Transition : PendingStage.NewAction));
 
-    @Override
-    public void setAwayStatus(String action) {
-        PendingStatus status = new PendingStatus(action, 0);
-        set(status);
-
-        if (action.compareTo(EXITED_EVENT) == 0) {
-            // Exit delay to avoid frequent out/in notifications
-            trySubmitAfterDelay(EXITDELAYSECONDS);
-        } else {
-            trySubmitOnThread(status);
+            acquireWakeLock();
+            processAfterDelay(1);
+        } catch (Exception exception) {
+            Logger.e(TAG, "Error setting action " + action, exception);
         }
     }
 
-    public void retryPending() {
-        retryPending(false);
-    }
+    private synchronized void processStatus() {
+        PendingStatus status = null;
+        try {
+            clearDelay();
+            status = get();
 
-    public void retryPending(boolean forceTry) {
-        PendingStatus status = get();
-        if (status != null && status.getAction().length() > 0) {
-            trySubmitOnThread(status, forceTry);
+            switch(status.getStage()) {
+                case Transition:
+                    if (status.getAction().equalsIgnoreCase(EXITED_EVENT)) {
+                        Logger.i(TAG, "Delaying exit transition by " + EXITDELAYSECONDS + " seconds");
+                        status.setStage(PendingStage.ExitDelay);
+                        processAfterDelay(EXITDELAYSECONDS);
+                        releaseWakeLock();
+                    } else {
+                        Logger.i(TAG, "Trying enter transition immediately");
+                        trySubmit(status, false);
+                    }
+                    break;
+                case NewAction:
+                    Logger.i(TAG, "Trying " + status.getAction() + " transition immediately");
+                    trySubmit(status, false);
+                    break;
+                case ExitDelay:
+                    Logger.i(TAG, "Trying exit transition after delay");
+                    trySubmit(status, false);
+                    break;
+                case WaitingForNetwork:
+                    Logger.i(TAG, "Still waiting for network, but retrying anyway");
+                    trySubmit(status, false);
+                    break;
+                case NetworkAvailable:
+                    Logger.i(TAG, "Network available, so forcing a retry");
+                    trySubmit(status, true);
+                    break;
+                case RetryDelay:
+                    Logger.i(TAG, "Retrying after delay");
+                    trySubmit(status, false);
+                    break;
+                case Complete:
+                    Logger.i(TAG, "Completed");
+                    status.clear(mContext);
+                    status = null;
+                    break;
+            }
+
+            if (status != null) {
+                set(status);
+            }
+
+        } catch (Exception exception) {
+            Logger.e(TAG, "Error processing status - " + (status != null ? (status.getAction() + " " + status.getStage().toString()) : "unknown"), exception);
         }
     }
 
-    private boolean isConnected() {
-        NetworkInfo activeNetwork = mConnectivityManager.getActiveNetworkInfo();
-        return activeNetwork != null &&
-                activeNetwork.isConnectedOrConnecting();
+    private void processAfterDelay(int delaySeconds) {
+        Intent intent = new Intent(mContext, AwayStatusDelayReceiver.class);
+        mAlarmIntent = PendingIntent.getBroadcast(mContext, 0, intent, 0);
+
+        mAlarmManager.set(AlarmManager.ELAPSED_REALTIME_WAKEUP,
+                SystemClock.elapsedRealtime() + delaySeconds * 1000, mAlarmIntent);
     }
 
-    private void trySubmitOnThread(final PendingStatus status) {
-        trySubmitOnThread(status, false);
-    }
-    private void trySubmitOnThread(final PendingStatus status, boolean forceTry) {
-        if (mAlarmManager != null) {
+    private void clearDelay() {
+        if (mAlarmIntent != null) {
             mAlarmManager.cancel(mAlarmIntent);
             mAlarmIntent = null;
         }
+    }
+
+    private void trySubmit(final PendingStatus status, boolean forceTry) {
         acquireWakeLock();
 
-        boolean connected = isConnected();
-        if (forceTry || connected) {
-            String message = connected
-                            ? "Connected and about to try submitting status : "
-                            : "Not connected but attempting to submit status anyway : ";
+        if (forceTry || isConnected()) {
+            status.setStage(PendingStage.Submitting);
 
-            Logger.i(TAG, message + status.getAction());
             AsyncTask<String, Void, Void> task = new AsyncTask<String, Void, Void>() {
                 @Override
                 protected Void doInBackground(String... urls) {
-                    trySubmit(status);
+                    tryPostStatus(status);
                     return null;
                 }
             };
             task.execute();
         } else {
-            if (mNetworkRequest == null) {
-                Logger.i(TAG, "Not connected so requesting network for status : " + status.getAction());
-                requestNetwork();
-            } else {
-                Logger.i(TAG, "Not connected so delaying submitting status : " + status.getAction());
-            }
+            Logger.i(TAG, "Not connected so waiting for network");
+            status.setStage(PendingStage.WaitingForNetwork);
+            requestNetwork();
 
-            retryUpToMaxAttempts(status);
+            processAfterDelay(NETWORKDELAYSECONDS);
         }
     }
 
@@ -146,89 +184,93 @@ public class ManageAwayStatus extends ConnectivityManager.NetworkCallback implem
     }
 
     @Override
-    public void onAvailable(Network network) {
-        Logger.i(TAG, "Network available, so about to attempt request");
-        retryPending(true);
+    public synchronized void onAvailable(Network network) {
+        try {
+            PendingStatus status = get();
+            status.setStage(PendingStage.NetworkAvailable);
+            set(status);
+
+            processAfterDelay(1);
+        } catch (Exception exception) {
+            Logger.e(TAG, "Error setting stage to NetworkAvailable", exception);
+        }
     }
 
-    private void trySubmit(final PendingStatus status) {
+    private boolean isConnected() {
+        NetworkInfo activeNetwork = mConnectivityManager.getActiveNetworkInfo();
+        return activeNetwork != null &&
+                activeNetwork.isConnectedOrConnecting();
+    }
+
+    private void tryPostStatus(PendingStatus status) {
         try {
-            postStatus(status.getAction());
-            clear();
+            IAwayStatusUpdate statusUpdate = new AwayStatusUpdate(mContext);
+            statusUpdate.updateStatus(status.getAction());
+
             Logger.i(TAG, "Successfully updated away status with action : " + status.getAction());
+            afterPostStatus(true);
+        } catch (Exception exception) {
+            Logger.e(TAG, "Failed to updated away status with action : " + (status != null ? status.getAction() : "unknown") + " - " + exception.getMessage());
+            afterPostStatus(false);
         }
-        catch(Exception e) {
-            Logger.e(TAG, "Failed to updated away status with action : " + status.getAction() + " - " + e.getMessage());
-            retryUpToMaxAttempts(status);
+    }
+
+    private synchronized void afterPostStatus(boolean successful) {
+        try {
+            PendingStatus status = get();
+
+            if (status.getStage() == PendingStage.Submitting) {
+                if (successful) {
+                    clear(status);
+                } else {
+                    retryUpToMaxAttempts(status);
+                }
+            }
+
+        } catch (Exception exception) {
+            Logger.e(TAG, "Error handling PostStatus result", exception);
         }
     }
 
     private void retryUpToMaxAttempts(final PendingStatus status) {
         status.setAttempts(status.getAttempts() + 1);
-        set(status);
 
         if (status.getAttempts() >= MAXATTEMPTS) {
             Logger.e(TAG, "Exceeded maximum attempts to update status");
-            clear();
+            clear(status);
 
             ShowNotification test = new ShowNotification(mContext);
             test.show("Failed to update Away Status", "Tried '" + status.getAction() + "' " + MAXATTEMPTS + " times");
         } else {
+            status.setStage(PendingStage.RetryDelay);
+            set(status);
+
             int retries = MAXATTEMPTS - status.getAttempts();
             Logger.i(TAG, "Will attempt to update status " + retries + " more time" + (retries == 1 ? "" : "s"));
 
             // Retry after delay
-            trySubmitAfterDelay(RETRYDELAYSECONDS);
+            processAfterDelay(RETRYDELAYSECONDS);
+            releaseWakeLock();
         }
-    }
-
-    private void trySubmitAfterDelay(int delaySeconds) {
-        Logger.i(TAG, "Submitting status after delay");
-
-        mAlarmManager = (AlarmManager)mContext.getSystemService(Context.ALARM_SERVICE);
-        Intent intent = new Intent(mContext, AwayStatusDelayReceiver.class);
-        mAlarmIntent = PendingIntent.getBroadcast(mContext, 0, intent, 0);
-
-        mAlarmManager.set(AlarmManager.ELAPSED_REALTIME_WAKEUP,
-                SystemClock.elapsedRealtime() + delaySeconds * 1000, mAlarmIntent);
-
-        releaseWakeLock();
-    }
-
-    private void postStatus(String action) throws IOException, AuthenticationException {
-        IAwayStatusUpdate statusUpdate = new AwayStatusUpdate(mContext);
-        statusUpdate.updateStatus(action);
     }
 
     private void set(PendingStatus pendingStatus)
     {
-        SharedPreferences prefs = mContext.getSharedPreferences(PREFFILE, Context.MODE_PRIVATE);
-
-        SharedPreferences.Editor editor = prefs.edit();
-        editor.putString(ACTIONPREF, pendingStatus.getAction());
-        editor.putInt(ATTEMPTSPREF, pendingStatus.getAttempts());
-        editor.commit();
+        pendingStatus.save(mContext);
     }
 
     private PendingStatus get()
     {
-        SharedPreferences prefs = mContext.getSharedPreferences(PREFFILE, Context.MODE_PRIVATE);
-        String action = prefs.getString(ACTIONPREF, "undefined");
-        if (action == "undefined")
-            return null;
-        int attempts = prefs.getInt(ATTEMPTSPREF, 0);
-
-        return new PendingStatus(action, attempts);
+        return new PendingStatus(mContext);
     }
 
-    private void clear()
-    {
-        SharedPreferences prefs = mContext.getSharedPreferences(PREFFILE, Context.MODE_PRIVATE);
+    private void clear() {
+        clear(get());
+    }
 
-        SharedPreferences.Editor editor = prefs.edit();
-        editor.remove(ACTIONPREF);
-        editor.remove(ATTEMPTSPREF);
-        editor.commit();
+    private void clear(PendingStatus pendingStatus)
+    {
+        pendingStatus.clear(mContext);
 
         if (mNetworkRequest != null) {
             mConnectivityManager.unregisterNetworkCallback(this);
@@ -250,13 +292,35 @@ public class ManageAwayStatus extends ConnectivityManager.NetworkCallback implem
         }
     }
 
+    private enum PendingStage {
+        Transition,
+        NewAction,
+        ExitDelay,
+        WaitingForNetwork,
+        NetworkAvailable,
+        RetryDelay,
+        Submitting,
+        Complete
+    }
+
     private class PendingStatus {
         private String mAction;
         private int mAttempts;
+        private PendingStage mStage;
 
-        public PendingStatus(String action, int attempts) {
+        private static final String PREFFILE = "pending_status";
+        private static final String ACTIONPREF = "action";
+        private static final String ATTEMPTSPREF = "attempts";
+        private static final String STAGEPREF = "stage";
+
+        public PendingStatus(Context context) {
+            load(context);
+        }
+
+        public PendingStatus(String action, int attempts, PendingStage stage) {
             setAction(action);
             setAttempts(attempts);
+            setStage(stage);
         }
 
         public String getAction() { return mAction; }
@@ -264,5 +328,41 @@ public class ManageAwayStatus extends ConnectivityManager.NetworkCallback implem
 
         public int getAttempts() { return mAttempts; }
         public void setAttempts(int attempts) { mAttempts = attempts; }
+
+        public PendingStage getStage() { return mStage; }
+        public void setStage(PendingStage stage) { mStage = stage; }
+
+        public void save(Context context) {
+            SharedPreferences prefs = context.getSharedPreferences(PREFFILE, Context.MODE_PRIVATE);
+
+            SharedPreferences.Editor editor = prefs.edit();
+            editor.putString(ACTIONPREF, getAction());
+            editor.putInt(ATTEMPTSPREF, getAttempts());
+            editor.putString(STAGEPREF, getStage().toString());
+            editor.commit();
+        }
+
+        private void load(Context context) {
+            SharedPreferences prefs = context.getSharedPreferences(PREFFILE, Context.MODE_PRIVATE);
+            String action = prefs.getString(ACTIONPREF, "undefined");
+            if (action == "undefined") {
+                mStage = PendingStage.Complete;
+                return;
+            }
+            mAction = action;
+            mAttempts = prefs.getInt(ATTEMPTSPREF, 0);
+            String stage = prefs.getString(STAGEPREF, PendingStage.Complete.toString());
+            mStage = PendingStage.valueOf(stage);
+        }
+
+        public void clear(Context context) {
+            SharedPreferences prefs = context.getSharedPreferences(PREFFILE, Context.MODE_PRIVATE);
+
+            SharedPreferences.Editor editor = prefs.edit();
+            editor.remove(ACTIONPREF);
+            editor.remove(ATTEMPTSPREF);
+            editor.remove(STAGEPREF);
+            editor.commit();
+        }
     }
 }

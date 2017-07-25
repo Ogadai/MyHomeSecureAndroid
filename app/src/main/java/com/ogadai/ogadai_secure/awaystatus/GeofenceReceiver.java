@@ -38,7 +38,6 @@ public class GeofenceReceiver extends BroadcastReceiver {
     }
 
     protected void postEvent(Context context, String eventName) {
-        IManageAwayStatus manageStatus = new ManageAwayStatus(context);
-        manageStatus.setAwayStatus(eventName);
+        ManageAwayStatus.setAwayStatus(context, eventName, true);
     }
 }
