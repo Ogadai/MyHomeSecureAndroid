@@ -191,6 +191,11 @@ public class ManageAwayStatus extends ConnectivityManager.NetworkCallback {
             set(status);
 
             processAfterDelay(1);
+
+            if (mNetworkRequest != null) {
+                mConnectivityManager.unregisterNetworkCallback(this);
+                mNetworkRequest = null;
+            }
         } catch (Exception exception) {
             Logger.e(TAG, "Error setting stage to NetworkAvailable", exception);
         }
